@@ -1,0 +1,135 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="theme-color" content="#6c6c6c">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="default">
+  <meta name="apple-mobile-web-app-title" content="ConjuFlow">
+  <title>ConjuFlow</title>
+  <link rel="manifest" href="manifest.webmanifest">
+  <link rel="apple-touch-icon" href="icons/icon-192.png">
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+  <main>
+    <header class="app-header">
+      <h1>ConjuFlow</h1>
+      <p class="subtitle">Practice high-frequency Mexican Spanish verbs with spaced repetition</p>
+    </header>
+
+    <section id="toolbar" class="toolbar" aria-labelledby="settingsTitle">
+      <div class="toolbar-heading">
+        <div>
+          <h2 id="settingsTitle">Practice settings</h2>
+          <p id="collapsedSummary" class="collapsed-summary" hidden></p>
+        </div>
+        <button id="toggleFiltersButton" class="quiet-button" type="button" hidden>Hide filters</button>
+      </div>
+
+      <div id="filterBody">
+        <div class="primary-filters">
+          <div class="field field-prominent">
+            <label for="tenseSelect">Tense / mood</label>
+            <select id="tenseSelect"></select>
+          </div>
+          <div class="field">
+            <label for="regularitySelect">Regularity</label>
+            <select id="regularitySelect">
+              <option value="all">Todos</option>
+              <option value="regular">Regulares</option>
+              <option value="irregular">Irregulares</option>
+              <option value="ortografico">Cambio ortográfico</option>
+            </select>
+          </div>
+        </div>
+
+        <details id="moreFilters" class="more-filters">
+          <summary>More filters</summary>
+          <div class="secondary-filters">
+            <div class="field">
+              <label for="endingSelect">Ending</label>
+              <select id="endingSelect">
+                <option value="all">Todas</option>
+                <option value="ar">-AR</option>
+                <option value="er">-ER</option>
+                <option value="ir">-IR</option>
+              </select>
+            </div>
+            <div class="field">
+              <label for="patternSelect">Pattern</label>
+              <select id="patternSelect"></select>
+            </div>
+            <div class="field">
+              <label for="pronominalSelect">Pronominal type</label>
+              <select id="pronominalSelect">
+                <option value="all">Todos</option>
+                <option value="no">No pronominales</option>
+                <option value="sí">Pronominales</option>
+              </select>
+            </div>
+            <div class="field">
+              <label for="rankSelect">Frequency range</label>
+              <select id="rankSelect">
+                <option value="50">1–50</option>
+                <option value="100">1–100</option>
+                <option value="150">1–150</option>
+                <option value="200">1–200</option>
+                <option value="300">1–300</option>
+                <option value="all" selected>Todos los disponibles</option>
+              </select>
+            </div>
+          </div>
+        </details>
+
+        <div class="start-row">
+          <div class="match-copy" aria-live="polite">
+            <strong id="matchCount">0 tarjetas coinciden con estos filtros</strong>
+            <span id="availabilityCount"></span>
+          </div>
+          <button id="startButton" class="start-button" type="button">Start practice</button>
+        </div>
+      </div>
+    </section>
+
+    <section class="study-shell" aria-label="Study session">
+      <p id="activeFilters" class="active-filters"></p>
+      <p id="progress" class="progress" aria-live="polite"></p>
+
+      <div id="emptyState" class="empty">
+        <strong id="emptyTitle">Choose your filters</strong>
+        <span id="emptyMessage">Then start a practice session.</span>
+      </div>
+
+      <div id="card" class="card" role="button" tabindex="0" aria-label="Card, tap to reveal" hidden>
+        <div class="card-inner">
+          <div id="sideLabel" class="card-label">Prompt</div>
+          <div id="front" class="content"></div>
+          <div id="back" class="content" hidden></div>
+        </div>
+      </div>
+
+      <p id="revealNote" class="reveal-note" hidden>Tap the card to reveal the answer</p>
+
+      <div class="buttons" aria-label="Rate your answer">
+        <button class="grade again" data-grade="1" disabled>Again<small>I forgot</small></button>
+        <button class="grade hard" data-grade="2" disabled>Hard<small>Difficult</small></button>
+        <button class="grade good" data-grade="3" disabled>Good<small>Good</small></button>
+        <button class="grade easy" data-grade="4" disabled>Easy<small>Easy</small></button>
+      </div>
+
+      <div class="nav">
+        <button id="previousButton" type="button" disabled>◀ Previous</button>
+        <button id="nextButton" type="button" disabled>Next ▶</button>
+      </div>
+      <p id="status" class="status" role="status"></p>
+    </section>
+  </main>
+
+  <script src="vendor/ts-fsrs-5.4.1.umd.js"></script>
+  <script src="data/conjugations.js"></script>
+  <script src="core.js"></script>
+  <script src="app.js"></script>
+</body>
+</html>
