@@ -1,0 +1,149 @@
+"use strict";
+
+const assert = require("node:assert/strict");
+const fs = require("node:fs");
+const http = require("node:http");
+const path = require("node:path");
+const { chromium } = require("playwright");
+
+const root = path.resolve(__dirname, "..");
+const mime = { ".html": "text/html", ".js": "text/javascript", ".css": "text/css", ".json": "application/json", ".webmanifest": "application/manifest+json", ".png": "image/png", ".svg": "image/svg+xml" };
+
+const server = http.createServer((request, response) => {
+  const pathname = decodeURIComponent(new URL(request.url, "http://localhost").pathname);
+  const relative = pathname === "/" ? "index.html" : pathname.replace(/^\//, "");
+  const filename = path.resolve(root, relative);
+  if (!filename.startsWith(root + path.sep) || !fs.existsSync(filename) || fs.statSync(filename).isDirectory()) {
+    response.writeHead(404).end("Not found");
+    return;
+  }
+  response.writeHead(200, { "Content-Type": mime[path.extname(filename)] || "application/octet-stream", "Cache-Control": "no-store" });
+  fs.createReadStream(filename).pipe(response);
+});
+
+function listen() {
+  return new Promise(resolve => server.listen(0, "127.0.0.1", resolve));
+}
+
+async function setFilters(page, values) {
+  if (values.tense) await page.selectOption("#tenseSelect", values.tense);
+  if (values.regularity) await page.selectOption("#regularitySelect", values.regularity);
+  if (values.ending) await page.selectOption("#endingSelect", values.ending);
+  if (values.pattern) await page.selectOption("#patternSelect", values.pattern);
+  if (values.pronominal) await page.selectOption("#pronominalSelect", values.pronominal);
+  if (values.rank) await page.selectOption("#rankSelect", values.rank);
+}
+
+async function countMatches(page) {
+  return Number((await page.locator("#matchCount").innerText()).match(/^\d+/)[0]);
+}
+
+async function findVerb(page, verb) {
+  const total = Number((await page.locator("#progress").innerText()).match(/\/\s*(\d+)/)[1]);
+  for (let index = 0; index < total; index += 1) {
+    if ((await page.locator(".front-verb").innerText()) === verb) return;
+    await page.click("#nextButton");
+  }
+  throw new Error(`Could not find ${verb} in the current session`);
+}
+
+async function readProgress(page) {
+  return page.evaluate(() => new Promise((resolve, reject) => {
+    const request = indexedDB.open("mexican-spanish-flashcards-db", 2);
+    request.onerror = () => reject(request.error);
+    request.onsuccess = () => {
+      const database = request.result;
+      const getAll = database.transaction("cardProgress").objectStore("cardProgress").getAll();
+      getAll.onerror = () => reject(getAll.error);
+      getAll.onsuccess = () => resolve(getAll.result);
+    };
+  }));
+}
+
+(async () => {
+  await listen();
+  let browser;
+
+  try {
+    browser = await chromium.launch({ headless: true });
+    const page = await browser.newPage({ viewport: { width: 390, height: 844 } });
+    const errors = [];
+    page.on("pageerror", error => errors.push(error.message));
+    page.on("console", message => { if (message.type() === "error") errors.push(message.text()); });
+    const baseUrl = `http://127.0.0.1:${server.address().port}/`;
+    await page.goto(baseUrl, { waitUntil: "networkidle" });
+    await page.waitForSelector("#startButton:not([disabled])");
+
+    const populatedCases = [
+      ["Presente + Irregulares", { tense: "presente_indicativo", regularity: "irregular", ending: "all", pattern: "all", pronominal: "all", rank: "all" }],
+      ["Presente + e→ie", { tense: "presente_indicativo", regularity: "all", pattern: "e→ie" }],
+      ["Pretérito + Irregulares", { tense: "preterito", regularity: "irregular", pattern: "all" }],
+      ["Pretérito + -gar", { tense: "preterito", regularity: "all", pattern: "-gar" }],
+      ["Futuro + Irregulares", { tense: "futuro", regularity: "irregular", pattern: "all" }],
+      ["Subjuntivo + yo-zco", { tense: "presente_subjuntivo", regularity: "all", pattern: "yo-zco" }],
+      ["Imperativo afirmativo + Pronominales", { tense: "imperativo_afirmativo", pattern: "all", pronominal: "sí" }],
+      ["Imperativo negativo + Pronominales", { tense: "imperativo_negativo", pronominal: "sí" }],
+      ["Solo -IR", { tense: "presente_indicativo", ending: "ir", pattern: "all", pronominal: "all" }],
+      ["Rango 1–50", { tense: "presente_indicativo", ending: "all", rank: "50" }]
+    ];
+    for (const [name, filters] of populatedCases) {
+      await setFilters(page, filters);
+      assert.ok(await countMatches(page), `${name} should have matches`);
+    }
+
+    await setFilters(page, { tense: "futuro", regularity: "all", ending: "ar", pattern: "yo-zco", pronominal: "sí", rank: "50" });
+    assert.equal(await countMatches(page), 0);
+    await page.click("#startButton");
+    assert.equal(await page.locator("#emptyTitle").innerText(), "No verbs match these filters.");
+
+    await setFilters(page, { tense: "imperativo_negativo", regularity: "all", ending: "all", pattern: "all", pronominal: "sí", rank: "all" });
+    await page.click("#startButton");
+    await page.click("#card");
+    const pronouns = await page.locator(".pronoun").allInnerTexts();
+    assert.deepEqual(pronouns, ["tú", "usted", "nosotros", "ustedes"]);
+
+    await setFilters(page, { tense: "presente_indicativo", regularity: "irregular", ending: "all", pattern: "e→ie", pronominal: "all", rank: "all" });
+    await page.click("#startButton");
+    await findVerb(page, "tener");
+    await page.click("#card");
+    await page.click(".grade.good");
+    await page.waitForTimeout(50);
+    let stored = await readProgress(page);
+    assert.deepEqual(stored.map(record => record.cardId), ["tener__presente_indicativo"]);
+    const presentSnapshot = JSON.stringify(stored[0].fsrs);
+
+    await setFilters(page, { tense: "preterito", regularity: "irregular", pattern: "pretérito_fuerte" });
+    await page.click("#startButton");
+    await findVerb(page, "tener");
+    await page.click("#card");
+    await page.click(".grade.easy");
+    await page.waitForTimeout(50);
+    stored = await readProgress(page);
+    assert.deepEqual(stored.map(record => record.cardId).sort(), ["tener__presente_indicativo", "tener__preterito"]);
+    assert.equal(JSON.stringify(stored.find(record => record.cardId === "tener__presente_indicativo").fsrs), presentSnapshot);
+
+    await setFilters(page, { tense: "presente_indicativo", regularity: "irregular", pattern: "all" });
+    await page.click("#startButton");
+    stored = await readProgress(page);
+    assert.equal(JSON.stringify(stored.find(record => record.cardId === "tener__presente_indicativo").fsrs), presentSnapshot);
+
+    await setFilters(page, { tense: "condicional", regularity: "all", ending: "all", pattern: "-guir", pronominal: "all", rank: "50" });
+    assert.equal(await countMatches(page), 1);
+    await page.click("#startButton");
+    assert.equal(await page.locator(".front-verb").innerText(), "seguir");
+    await page.click("#card");
+    await page.click(".grade.good");
+    await page.waitForSelector("#emptyTitle");
+    assert.equal(await page.locator("#emptyTitle").innerText(), "You're caught up.");
+    assert.match(await page.locator("#emptyMessage").innerText(), /^Next review:/);
+
+    assert.deepEqual(errors, []);
+    console.log("Browser smoke checks passed, including FSRS identity and caught-up state.");
+  } finally {
+    if (browser) await browser.close();
+    await new Promise(resolve => server.close(resolve));
+  }
+})().catch(error => {
+  console.error(error);
+  process.exitCode = 1;
+});
