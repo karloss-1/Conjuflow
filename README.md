@@ -4,7 +4,7 @@ Static, local-first conjugation practice app based on the original Mexican Spani
 
 ## Files
 
-- `Conjugaciones_Piloto_60_verbos_540_tarjetas.csv`: editable source of truth.
+- `Conjugaciones_Piloto_61_verbos_549_tarjetas_patterns_contextuales.csv`: editable source of truth.
 - `data/conjugations.js`: generated browser data; do not edit it by hand.
 - `scripts/csv_to_js.py`: CSV → JavaScript converter and validation.
 - `app.js`: IndexedDB, FSRS adapter, sessions, rendering, and controls.
@@ -16,9 +16,12 @@ Static, local-first conjugation practice app based on the original Mexican Spani
 From the project directory:
 
 ```bash
-python3 scripts/csv_to_js.py Conjugaciones_Piloto_60_verbos_540_tarjetas.csv data/conjugations.js
+python3 scripts/csv_to_js.py Conjugaciones_Piloto_61_verbos_549_tarjetas_patterns_contextuales.csv data/conjugations.js
 node tests/check_dataset.js
+node tests/pattern_context.js
 node tests/fsrs_invariants.js
+python3 tests/converter_checks.py
+node tests/static_regression.js
 ```
 
 For the optional browser smoke test (when Playwright is installed):
@@ -29,9 +32,13 @@ node tests/browser_smoke.js
 
 Commit both the CSV and regenerated `data/conjugations.js` to GitHub. GitHub Pages can serve the directory directly; no build step, backend, or runtime package manager is required.
 
+## Contextual Pattern filter
+
+`Pattern` is calculated dynamically from the cards that survive the active Tense, Regularity, Ending, Pronominal type, and Frequency filters. Pattern does not filter its own options. If no surviving card has a pattern, the selector is disabled; if a saved or selected pattern stops being compatible, it safely returns to `all`.
+
 ## Storage migration
 
-The app keeps the original database name and raises its version from 1 to 2. On first launch it removes the obsolete `deckProgress` store and creates `cardProgress`, keyed by `cardId`. Old deck progress is intentionally not imported. Filter choices are stored separately in `localStorage` and never affect FSRS identity.
+The app keeps the existing database name and version 2 schema. Progress remains in `cardProgress`, keyed by `cardId`; all 540 previous IDs are preserved and only the nine `leer` cards are new. Filter choices are stored separately in `localStorage` and never affect FSRS identity.
 
 ## Navigation behavior
 

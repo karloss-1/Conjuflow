@@ -10,9 +10,14 @@ from pathlib import Path
 
 REQUIRED_COLUMNS = {
     "card_id", "rank_corpus", "verbo", "verbo_base", "tiempo_id", "tiempo",
-    "regularidad_tarjeta", "terminacion", "pronominal", "patrones", "aplicable",
+    "regularidad_tarjeta", "terminacion", "pronominal", "patrones_tarjeta", "aplicable",
     "yo", "tu", "el_ella_usted", "nosotros", "ellos_ellas_ustedes", "nota",
 }
+OUTPUT_COLUMNS = (
+    "card_id", "verbo", "verbo_base", "tiempo_id", "tiempo",
+    "regularidad_tarjeta", "terminacion", "pronominal", "aplicable",
+    "yo", "tu", "el_ella_usted", "nosotros", "ellos_ellas_ustedes", "nota",
+)
 
 
 def convert(source: Path, destination: Path) -> None:
@@ -33,9 +38,9 @@ def convert(source: Path, destination: Path) -> None:
             rank = int(row["rank_corpus"])
         except ValueError as error:
             raise SystemExit(f"Invalid rank_corpus for {row['card_id']}: {row['rank_corpus']}") from error
-        card = {key: row[key].strip() for key in REQUIRED_COLUMNS if key not in {"rank_corpus", "patrones"}}
+        card = {key: row[key].strip() for key in OUTPUT_COLUMNS}
         card["rank_corpus"] = rank
-        card["patterns"] = [value for value in row["patrones"].split(";") if value]
+        card["patterns"] = [value.strip() for value in row["patrones_tarjeta"].split(";") if value.strip()]
         cards.append(card)
 
     payload = {"version": 1, "source": source.name, "cards": cards}

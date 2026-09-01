@@ -155,10 +155,17 @@ function restoreFilters() {
 }
 
 function updatePatternOptions(preferred = elements.pattern.value) {
-  const patterns = ConjuFlowCore.availablePatterns(CONTENT.cards, elements.tense.value);
+  const patterns = ConjuFlowCore.availablePatterns(CONTENT.cards, currentFilters());
+  if (!patterns.length) {
+    elements.pattern.replaceChildren(new Option("No patterns available", "all"));
+    elements.pattern.value = "all";
+    elements.pattern.disabled = true;
+    return;
+  }
+  elements.pattern.disabled = false;
   elements.pattern.replaceChildren(new Option("Todos los patrones", "all"));
   for (const pattern of patterns) elements.pattern.add(new Option(ConjuFlowCore.patternLabel(pattern), pattern));
-  elements.pattern.value = patterns.includes(preferred) ? preferred : "all";
+  elements.pattern.value = ConjuFlowCore.resolvePatternSelection(patterns, preferred);
 }
 
 function filterSummary(filters, includeSecondary = true) {
@@ -393,7 +400,7 @@ function populateTenses() {
 }
 
 function handleFilterChange(event) {
-  if (event.target === elements.tense) updatePatternOptions();
+  if (event.target !== elements.pattern) updatePatternOptions();
   updateMatchPreview();
 }
 

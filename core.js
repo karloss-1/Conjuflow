@@ -12,23 +12,19 @@
     "o→ue": "o → ue",
     "e→i": "e → i",
     "u→ue": "u → ue",
-    "yo-go": "yo-go",
-    "yo-zco": "yo-zco",
-    "yo_irregular": "primera persona irregular",
-    "pretérito_fuerte": "pretérito fuerte",
-    "pretérito_3a_e→i": "pretérito: cambio e → i en tercera persona",
-    "pretérito_3a_o→u": "pretérito: cambio o → u en tercera persona",
-    "futuro_irregular": "futuro irregular",
-    "imperativo_tú_irregular": "imperativo tú irregular",
-    "-car": "-car",
-    "-gar": "-gar",
-    "-zar": "-zar",
-    "-guir": "-guir",
-    "pronominal": "pronominal",
-    "altamente_irregular": "altamente irregular",
-    "pretérito_irregular": "pretérito irregular",
-    "imperfecto_irregular": "imperfecto irregular",
-    "regular": "regular"
+    "o→u": "o → u",
+    "yo→-go": "yo → -go",
+    "yo→-zco": "yo → -zco",
+    "yo irregular": "Yo irregular",
+    "e→i (3.ª persona)": "e → i (3rd person)",
+    "o→u (3.ª persona)": "o → u (3rd person)",
+    "e→ie/e→i (-ir)": "e → ie / e → i (-ir)",
+    "o→ue/o→u (-ir)": "o → ue / o → u (-ir)",
+    "cambio ortográfico": "Cambio ortográfico",
+    "i→y": "i → y",
+    "raíz en j": "Raíz en j",
+    "raíz irregular": "Raíz irregular",
+    "muy irregular": "Muy irregular"
   };
 
   function patternLabel(value) {
@@ -40,33 +36,42 @@
     const seen = new Set();
     const cards = content.cards.map(raw => {
       if (!raw.card_id || seen.has(raw.card_id)) throw new Error(`Invalid or duplicate card_id: ${raw.card_id || "(empty)"}`);
+      if (!Array.isArray(raw.patterns)) throw new Error(`Invalid patterns array for ${raw.card_id}`);
       seen.add(raw.card_id);
       return {
         ...raw,
         rank_corpus: Number(raw.rank_corpus),
-        patterns: Array.isArray(raw.patterns) ? raw.patterns.filter(Boolean) : String(raw.patrones || "").split(";").filter(Boolean),
+        patterns: raw.patterns.map(value => String(value).trim()).filter(Boolean),
         applicable: raw.aplicable === true || raw.aplicable === "sí"
       };
     });
     return { ...content, cards };
   }
 
-  function filterCards(cards, filters) {
+  function matchesBaseFilters(card, filters) {
     const maxRank = filters.rank === "all" ? Infinity : Number(filters.rank);
-    return cards.filter(card =>
-      card.applicable &&
+    return card.applicable &&
       card.tiempo_id === filters.tense &&
       (filters.regularity === "all" || card.regularidad_tarjeta === filters.regularity) &&
       (filters.ending === "all" || card.terminacion === filters.ending) &&
-      (filters.pattern === "all" || card.patterns.includes(filters.pattern)) &&
       (filters.pronominal === "all" || card.pronominal === filters.pronominal) &&
-      card.rank_corpus <= maxRank
+      card.rank_corpus <= maxRank;
+  }
+
+  function filterCards(cards, filters) {
+    return cards.filter(card =>
+      matchesBaseFilters(card, filters) &&
+      (filters.pattern === "all" || card.patterns.includes(filters.pattern))
     );
   }
 
-  function availablePatterns(cards, tense) {
-    return [...new Set(cards.filter(card => card.applicable && card.tiempo_id === tense).flatMap(card => card.patterns))]
+  function availablePatterns(cards, filters) {
+    return [...new Set(cards.filter(card => matchesBaseFilters(card, filters)).flatMap(card => card.patterns).filter(Boolean))]
       .sort((a, b) => patternLabel(a).localeCompare(patternLabel(b), "es"));
+  }
+
+  function resolvePatternSelection(patterns, preferred) {
+    return patterns.includes(preferred) ? preferred : "all";
   }
 
   function isImperative(card) {
@@ -80,5 +85,5 @@
     return rows.filter(([, value]) => String(value || "").trim());
   }
 
-  return { normalizeContent, filterCards, availablePatterns, patternLabel, isImperative, paradigmRows };
+  return { normalizeContent, matchesBaseFilters, filterCards, availablePatterns, resolvePatternSelection, patternLabel, isImperative, paradigmRows };
 }));
