@@ -49,13 +49,13 @@
   }
 
   function matchesBaseFilters(card, filters) {
-    const maxRank = filters.rank === "all" ? Infinity : Number(filters.rank);
     return card.applicable &&
       card.tiempo_id === filters.tense &&
-      (filters.regularity === "all" || card.regularidad_tarjeta === filters.regularity) &&
+      (filters.regularity === "all" ||
+        (filters.regularity === "regular" && card.regularidad_tarjeta === "regular") ||
+        (filters.regularity === "irregular" && card.regularidad_tarjeta !== "regular")) &&
       (filters.ending === "all" || card.terminacion === filters.ending) &&
-      (filters.pronominal === "all" || card.pronominal === filters.pronominal) &&
-      card.rank_corpus <= maxRank;
+      (filters.pronominal === "all" || card.pronominal === filters.pronominal);
   }
 
   function filterCards(cards, filters) {

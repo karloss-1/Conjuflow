@@ -21,7 +21,7 @@ const TENSES = [
   ["imperativo_afirmativo", "Imperativo afirmativo"],
   ["imperativo_negativo", "Imperativo negativo"]
 ];
-const REGULARITY_LABELS = { all: "Todos", regular: "Regulares", irregular: "Irregulares", ortografico: "Cambio ortográfico" };
+const REGULARITY_LABELS = { all: "Todos", regular: "Regulares", irregular: "Irregulares" };
 const ENDING_LABELS = { all: "Todas", ar: "-AR", er: "-ER", ir: "-IR" };
 const PRONOMINAL_LABELS = { all: "Todos", no: "No pronominales", "sí": "Pronominales" };
 
@@ -42,7 +42,7 @@ const $ = id => document.getElementById(id);
 const elements = {
   toolbar: $("toolbar"), filterBody: $("filterBody"), toggleFiltersButton: $("toggleFiltersButton"),
   collapsedSummary: $("collapsedSummary"), tense: $("tenseSelect"), regularity: $("regularitySelect"),
-  ending: $("endingSelect"), pattern: $("patternSelect"), pronominal: $("pronominalSelect"), rank: $("rankSelect"),
+  ending: $("endingSelect"), pattern: $("patternSelect"), pronominal: $("pronominalSelect"),
   matchCount: $("matchCount"), availabilityCount: $("availabilityCount"), startButton: $("startButton"),
   activeFilters: $("activeFilters"), progress: $("progress"), emptyState: $("emptyState"),
   emptyTitle: $("emptyTitle"), emptyMessage: $("emptyMessage"), card: $("card"), front: $("front"), back: $("back"),
@@ -131,8 +131,7 @@ function currentFilters() {
     regularity: elements.regularity.value,
     ending: elements.ending.value,
     pattern: elements.pattern.value,
-    pronominal: elements.pronominal.value,
-    rank: elements.rank.value
+    pronominal: elements.pronominal.value
   };
 }
 
@@ -148,7 +147,7 @@ function restoreFilters() {
   let saved = {};
   try { saved = JSON.parse(localStorage.getItem(FILTERS_KEY)) || {}; } catch (_) { saved = {}; }
   elements.tense.value = TENSES.some(([id]) => id === saved.tense) ? saved.tense : TENSES[0][0];
-  for (const [element, value] of [[elements.regularity, saved.regularity], [elements.ending, saved.ending], [elements.pronominal, saved.pronominal], [elements.rank, saved.rank]]) {
+  for (const [element, value] of [[elements.regularity, saved.regularity], [elements.ending, saved.ending], [elements.pronominal, saved.pronominal]]) {
     if ([...element.options].some(option => option.value === value)) element.value = value;
   }
   updatePatternOptions(saved.pattern);
@@ -174,7 +173,6 @@ function filterSummary(filters, includeSecondary = true) {
     if (filters.ending !== "all") labels.push(ENDING_LABELS[filters.ending]);
     if (filters.pattern !== "all") labels.push(ConjuFlowCore.patternLabel(filters.pattern));
     if (filters.pronominal !== "all") labels.push(PRONOMINAL_LABELS[filters.pronominal]);
-    if (filters.rank !== "all") labels.push(`1–${filters.rank}`);
   }
   return labels.join(" · ");
 }
@@ -405,7 +403,7 @@ function handleFilterChange(event) {
 }
 
 function attachEvents() {
-  for (const select of [elements.tense, elements.regularity, elements.ending, elements.pattern, elements.pronominal, elements.rank]) {
+  for (const select of [elements.tense, elements.regularity, elements.ending, elements.pattern, elements.pronominal]) {
     select.addEventListener("change", handleFilterChange);
   }
   elements.startButton.addEventListener("click", startPractice);

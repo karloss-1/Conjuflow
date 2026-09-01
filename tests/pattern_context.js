@@ -10,7 +10,7 @@ const context = { window: {} };
 vm.createContext(context);
 vm.runInContext(fs.readFileSync(path.join(__dirname, "..", "data", "conjugations.js"), "utf8"), context);
 const cards = core.normalizeContent(context.window.CONJUGATION_CONTENT).cards;
-const base = { tense: "presente_indicativo", regularity: "all", ending: "all", pattern: "all", pronominal: "all", rank: "all" };
+const base = { tense: "presente_indicativo", regularity: "all", ending: "all", pattern: "all", pronominal: "all" };
 const filters = values => ({ ...base, ...values });
 const patterns = values => core.availablePatterns(cards, filters(values));
 const selected = values => core.filterCards(cards, filters(values));
@@ -29,8 +29,17 @@ const preteritePronominal = patterns({ tense: "preterito", pronominal: "sí" });
 assert.equal(preteriteNonPronominal.includes("i→y"), true);
 assert.equal(preteritePronominal.includes("i→y"), false, "pronominal filtering must remove unavailable patterns");
 
-assert.equal(patterns({ tense: "preterito", rank: "50" }).includes("i→y"), false);
-assert.equal(patterns({ tense: "preterito", rank: "100" }).includes("i→y"), true, "frequency range must affect Pattern options");
+assert.equal(patterns({ tense: "preterito", regularity: "irregular" }).includes("cambio ortográfico"), true, "orthographic cards must contribute Pattern options under Irregulares");
+assert.deepEqual(
+  core.availablePatterns(cards, { ...filters({ tense: "preterito" }), rank: "1" }),
+  patterns({ tense: "preterito" }),
+  "legacy Frequency values must not affect Pattern options"
+);
+assert.deepEqual(
+  core.filterCards(cards, { ...filters({ tense: "preterito" }), rank: "1" }).map(card => card.card_id),
+  selected({ tense: "preterito" }).map(card => card.card_id),
+  "legacy Frequency values must not affect final card filtering"
+);
 
 assert.deepEqual(
   patterns({ regularity: "irregular", ending: "ir", pattern: "does-not-exist" }),

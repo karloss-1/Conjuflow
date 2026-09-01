@@ -13,7 +13,7 @@ const rawContent = context.window.CONJUGATION_CONTENT;
 const content = core.normalizeContent(rawContent);
 const cards = content.cards;
 
-const base = { regularity: "all", ending: "all", pattern: "all", pronominal: "all", rank: "all" };
+const base = { regularity: "all", ending: "all", pattern: "all", pronominal: "all" };
 const select = filters => core.filterCards(cards, { ...base, ...filters });
 const expectSome = (name, filters) => assert.ok(select(filters).length > 0, `${name} should have matches`);
 
@@ -26,8 +26,12 @@ expectSome("Presente + yo→-zco", { tense: "presente_indicativo", pattern: "yo�
 expectSome("Imperativo afirmativo + Pronominales", { tense: "imperativo_afirmativo", pronominal: "sí" });
 expectSome("Imperativo negativo + Pronominales", { tense: "imperativo_negativo", pronominal: "sí" });
 expectSome("Solo -IR", { tense: "presente_indicativo", ending: "ir" });
-assert.ok(select({ tense: "presente_indicativo", rank: "50" }).every(card => card.rank_corpus <= 50));
-assert.equal(select({ tense: "presente_indicativo", regularity: "ortografico" }).length, 0);
+const orthographicCards = cards.filter(card => card.applicable && card.regularidad_tarjeta === "ortografico");
+assert.ok(orthographicCards.length > 0);
+for (const card of orthographicCards) {
+  assert.ok(select({ tense: card.tiempo_id, regularity: "irregular" }).includes(card), "orthographic cards must be included under Irregulares");
+  assert.equal(select({ tense: card.tiempo_id, regularity: "regular" }).includes(card), false);
+}
 
 assert.equal(rawContent.source, "Conjugaciones_Piloto_61_verbos_549_tarjetas_patterns_contextuales.csv");
 assert.equal(cards.length, 549);

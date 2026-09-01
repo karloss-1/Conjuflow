@@ -31,7 +31,6 @@ async function setFilters(page, values) {
   if (values.regularity) await page.selectOption("#regularitySelect", values.regularity);
   if (values.ending) await page.selectOption("#endingSelect", values.ending);
   if (values.pronominal) await page.selectOption("#pronominalSelect", values.pronominal);
-  if (values.rank) await page.selectOption("#rankSelect", values.rank);
   if (values.pattern) await page.selectOption("#patternSelect", values.pattern);
 }
 
@@ -82,9 +81,21 @@ async function readProgress(page) {
     const baseUrl = `http://127.0.0.1:${server.address().port}/`;
     await page.goto(baseUrl, { waitUntil: "networkidle" });
     await page.waitForSelector("#startButton:not([disabled])");
+    assert.deepEqual(
+      await page.locator("#regularitySelect option").evaluateAll(options => options.map(option => [option.value, option.textContent])),
+      [["all", "Todos"], ["regular", "Regulares"], ["irregular", "Irregulares"]]
+    );
+    assert.equal(await page.locator("#rankSelect").count(), 0);
+
+    await page.evaluate(() => localStorage.setItem("conjuflow-filters-v1", JSON.stringify({
+      tense: "preterito", regularity: "irregular", ending: "all", pattern: "cambio ortográfico", pronominal: "all", rank: "50"
+    })));
+    await page.reload({ waitUntil: "networkidle" });
+    assert.equal(await page.locator("#regularitySelect").inputValue(), "irregular");
+    assert.equal(await page.locator("#patternSelect").inputValue(), "cambio ortográfico");
 
     const populatedCases = [
-      ["Presente + Irregulares", { tense: "presente_indicativo", regularity: "irregular", ending: "all", pattern: "all", pronominal: "all", rank: "all" }],
+      ["Presente + Irregulares", { tense: "presente_indicativo", regularity: "irregular", ending: "all", pattern: "all", pronominal: "all" }],
       ["Presente + e→ie", { tense: "presente_indicativo", regularity: "all", pattern: "e→ie" }],
       ["Pretérito + Irregulares", { tense: "preterito", regularity: "irregular", pattern: "all" }],
       ["Pretérito + cambio ortográfico", { tense: "preterito", regularity: "all", pattern: "cambio ortográfico" }],
@@ -92,15 +103,14 @@ async function readProgress(page) {
       ["Presente + yo→-zco", { tense: "presente_indicativo", regularity: "all", pattern: "yo→-zco" }],
       ["Imperativo afirmativo + Pronominales", { tense: "imperativo_afirmativo", pattern: "all", pronominal: "sí" }],
       ["Imperativo negativo + Pronominales", { tense: "imperativo_negativo", pronominal: "sí" }],
-      ["Solo -IR", { tense: "presente_indicativo", ending: "ir", pattern: "all", pronominal: "all" }],
-      ["Rango 1–50", { tense: "presente_indicativo", ending: "all", rank: "50" }]
+      ["Solo -IR", { tense: "presente_indicativo", ending: "ir", pattern: "all", pronominal: "all" }]
     ];
     for (const [name, filters] of populatedCases) {
       await setFilters(page, filters);
       assert.ok(await countMatches(page), `${name} should have matches`);
     }
 
-    await setFilters(page, { tense: "presente_indicativo", regularity: "irregular", ending: "ir", pattern: "all", pronominal: "all", rank: "all" });
+    await setFilters(page, { tense: "presente_indicativo", regularity: "irregular", ending: "ir", pattern: "all", pronominal: "all" });
     let patternValues = await page.locator("#patternSelect option").evaluateAll(options => options.map(option => option.value));
     assert.ok(patternValues.includes("e→i"));
     await page.selectOption("#patternSelect", "e→i");
@@ -115,26 +125,30 @@ async function readProgress(page) {
     await setFilters(page, { regularity: "regular" });
     assert.equal(await page.locator("#patternSelect").isDisabled(), true);
 
-    await setFilters(page, { tense: "preterito", regularity: "all", ending: "all", pattern: "i→y", pronominal: "all", rank: "100" });
+    await setFilters(page, { tense: "preterito", regularity: "all", ending: "all", pattern: "i→y", pronominal: "all" });
     await page.reload({ waitUntil: "networkidle" });
     assert.equal(await page.locator("#tenseSelect").inputValue(), "preterito");
     assert.equal(await page.locator("#patternSelect").inputValue(), "i→y");
     await page.click("#startButton");
     await findVerb(page, "leer");
 
-    await setFilters(page, { tense: "presente_indicativo", regularity: "ortografico", ending: "all", pronominal: "all", rank: "all" });
+    await setFilters(page, { tense: "preterito", regularity: "irregular", ending: "all", pattern: "all", pronominal: "all" });
+    patternValues = await page.locator("#patternSelect option").evaluateAll(options => options.map(option => option.value));
+    assert.ok(patternValues.includes("cambio ortográfico"));
+
+    await setFilters(page, { tense: "condicional", regularity: "irregular", ending: "ar", pattern: "all", pronominal: "no" });
     assert.equal(await countMatches(page), 0);
     assert.equal(await page.locator("#patternSelect").isDisabled(), true);
     await page.click("#startButton");
     assert.equal(await page.locator("#emptyTitle").innerText(), "No verbs match these filters.");
 
-    await setFilters(page, { tense: "imperativo_negativo", regularity: "all", ending: "all", pattern: "all", pronominal: "sí", rank: "all" });
+    await setFilters(page, { tense: "imperativo_negativo", regularity: "all", ending: "all", pattern: "all", pronominal: "sí" });
     await page.click("#startButton");
     await page.click("#card");
     const pronouns = await page.locator(".pronoun").allInnerTexts();
     assert.deepEqual(pronouns, ["tú", "usted", "nosotros", "ustedes"]);
 
-    await setFilters(page, { tense: "presente_indicativo", regularity: "irregular", ending: "all", pattern: "e→ie", pronominal: "all", rank: "all" });
+    await setFilters(page, { tense: "presente_indicativo", regularity: "irregular", ending: "all", pattern: "e→ie", pronominal: "all" });
     await page.click("#startButton");
     await findVerb(page, "tener");
     await page.click("#card");
@@ -159,7 +173,7 @@ async function readProgress(page) {
     stored = await readProgress(page);
     assert.equal(JSON.stringify(stored.find(record => record.cardId === "tener__presente_indicativo").fsrs), presentSnapshot);
 
-    await setFilters(page, { tense: "condicional", regularity: "all", ending: "all", pattern: "raíz irregular", pronominal: "sí", rank: "100" });
+    await setFilters(page, { tense: "condicional", regularity: "all", ending: "all", pattern: "raíz irregular", pronominal: "sí" });
     assert.equal(await countMatches(page), 1);
     await page.click("#startButton");
     assert.equal(await page.locator(".front-verb").innerText(), "ponerse");

@@ -34,7 +34,7 @@ Commit both the CSV and regenerated `data/conjugations.js` to GitHub. GitHub Pag
 
 ## Contextual Pattern filter
 
-`Pattern` is calculated dynamically from the cards that survive the active Tense, Regularity, Ending, Pronominal type, and Frequency filters. Pattern does not filter its own options. If no surviving card has a pattern, the selector is disabled; if a saved or selected pattern stops being compatible, it safely returns to `all`.
+`Pattern` is calculated dynamically from the cards that survive the active Tense, Regularity, Ending, and Pronominal type filters. Pattern does not filter its own options. If no surviving card has a pattern, the selector is disabled; if a saved or selected pattern stops being compatible, it safely returns to `all`.
 
 ## Storage migration
 
