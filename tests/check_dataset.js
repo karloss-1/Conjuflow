@@ -23,24 +23,24 @@ expectSome("Pretérito + Irregulares", { tense: "preterito", regularity: "irregu
 expectSome("Pretérito + cambio ortográfico", { tense: "preterito", pattern: "cambio ortográfico" });
 expectSome("Futuro + Irregulares", { tense: "futuro", regularity: "irregular" });
 expectSome("Presente + yo→-zco", { tense: "presente_indicativo", pattern: "yo→-zco" });
-expectSome("Imperativo afirmativo + Pronominales", { tense: "imperativo_afirmativo", pronominal: "sí" });
-expectSome("Imperativo negativo + Pronominales", { tense: "imperativo_negativo", pronominal: "sí" });
+expectSome("Imperativo + Pronominales", { tense: "imperativo", pronominal: "sí" });
 expectSome("Solo -IR", { tense: "presente_indicativo", ending: "ir" });
-const orthographicCards = cards.filter(card => card.applicable && card.regularidad_tarjeta === "ortografico");
+const orthographicCards = cards.filter(card => card.applicable && card.patterns.includes("cambio ortográfico"));
 assert.ok(orthographicCards.length > 0);
 for (const card of orthographicCards) {
   assert.ok(select({ tense: card.tiempo_id, regularity: "irregular" }).includes(card), "orthographic cards must be included under Irregulares");
   assert.equal(select({ tense: card.tiempo_id, regularity: "regular" }).includes(card), false);
 }
 
-assert.equal(rawContent.source, "Conjugaciones_Piloto_61_verbos_549_tarjetas_patterns_contextuales.csv");
-assert.equal(cards.length, 549);
-assert.equal(new Set(cards.map(card => card.verbo)).size, 61);
+assert.equal(rawContent.source, "Conjugaciones_Final_170_verbos_1360_tarjetas.csv");
+assert.equal(cards.length, 1360);
+assert.equal(new Set(cards.map(card => card.verbo)).size, 170);
 assert.equal(new Set(cards.map(card => card.card_id)).size, cards.length, "card_id values must be unique");
 const cardsPerVerb = new Map();
 for (const card of cards) cardsPerVerb.set(card.verbo, (cardsPerVerb.get(card.verbo) || 0) + 1);
-assert.ok([...cardsPerVerb.values()].every(count => count === 9), "every pilot verb must have nine cards");
+assert.ok([...cardsPerVerb.values()].every(count => count === 8), "every final verb must have eight cards");
 assert.ok(rawContent.cards.every(card => Array.isArray(card.patterns)), "generated patterns must always be arrays");
+assert.equal(rawContent.cards.filter(card => card.rank_corpus === null).length, 24, "blank corpus ranks must remain null");
 assert.ok(rawContent.cards.some(card => card.patterns.length === 0), "an empty CSV cell must generate []");
 assert.ok(rawContent.cards.every(card => !("patrones_tarjeta" in card)), "CSV-only pattern fields must not leak into generated cards");
 assert.notEqual(cards.find(card => card.card_id === "tener__preterito").card_id, cards.find(card => card.card_id === "tener__presente_indicativo").card_id);
@@ -48,12 +48,12 @@ assert.ok(cards.some(card => card.verbo === "quedarse"));
 assert.ok(cards.some(card => card.verbo === "quedar"));
 assert.ok(cards.filter(card => !card.applicable).every(card => !select({ tense: card.tiempo_id }).includes(card)));
 
-for (const tense of ["imperativo_afirmativo", "imperativo_negativo"]) {
-  for (const card of select({ tense, pronominal: "sí" })) {
-    const rows = core.paradigmRows(card);
-    assert.deepEqual(rows.map(([pronoun]) => pronoun), ["tú", "usted", "nosotros", "ustedes"]);
-    assert.ok(rows.every(([, form]) => form));
-  }
+assert.equal(cards.some(card => ["imperativo_afirmativo", "imperativo_negativo"].includes(card.tiempo_id)), false);
+assert.equal(cards.filter(card => card.tiempo_id === "imperativo").length, 170);
+for (const card of select({ tense: "imperativo" })) {
+  const rows = core.paradigmRows(card);
+  assert.deepEqual(rows.map(([pronoun]) => pronoun), ["tú", "usted", "nosotros", "ustedes"]);
+  assert.ok(rows.every(([, form]) => form.includes(" / ")), "imperative forms must keep affirmative and negative together");
 }
 
 const multiPattern = cards.find(card => card.patterns.length > 1);

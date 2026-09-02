@@ -57,6 +57,11 @@ assert.ok(leerPreterite.some(card => card.card_id === "leer__preterito"));
 const leerImperfectSubjunctive = selected({ tense: "imperfecto_subjuntivo", pattern: "i→y" });
 assert.ok(leerImperfectSubjunctive.some(card => card.card_id === "leer__imperfecto_subjuntivo"));
 
+const imperativePatterns = patterns({ tense: "imperativo" });
+assert.ok(imperativePatterns.length > 0, "Imperativo must expose contextual Pattern options");
+assert.ok(imperativePatterns.includes("cambio ortográfico"));
+assert.deepEqual(Array.from(selected({ tense: "imperativo", pattern: "u→ue" }), card => card.card_id), ["jugar__imperativo"]);
+
 assert.equal(core.resolvePatternSelection(presentIrregularIr, "e→i"), "e→i", "a still-valid Pattern must be preserved");
 assert.equal(core.resolvePatternSelection(presentIrregularEr, "e→i"), "all", "an invalid Pattern must reset to all");
 assert.equal(core.resolvePatternSelection(presentIrregularIr, "pretérito_fuerte"), "all", "an obsolete saved Pattern must reset safely");

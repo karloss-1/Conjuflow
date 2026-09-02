@@ -36,6 +36,11 @@ for (const asset of ["styles.css", "core.js", "app.js", "manifest.webmanifest", 
   assert.ok(fs.existsSync(path.join(root, asset)), `${asset} must exist`);
   assert.ok(serviceWorker.includes(`"./${asset}"`), `${asset} must be represented in the offline cache`);
 }
-assert.match(serviceWorker, /const CACHE_NAME = "conjuflow-v3";/);
+assert.match(app, /\["imperativo", "Imperativo"\]/);
+assert.equal(app.includes("imperativo_afirmativo"), false);
+assert.equal(app.includes("imperativo_negativo"), false);
+assert.equal(core.includes("imperativo_afirmativo"), false);
+assert.equal(core.includes("imperativo_negativo"), false);
+assert.match(serviceWorker, /const CACHE_NAME = "conjuflow-v4";/);
 
 console.log("Static app and PWA regression checks passed.");

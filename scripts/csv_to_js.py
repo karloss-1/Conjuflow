@@ -34,8 +34,9 @@ def convert(source: Path, destination: Path) -> None:
 
     cards = []
     for row in rows:
+        rank_text = row["rank_corpus"].strip()
         try:
-            rank = int(row["rank_corpus"])
+            rank = int(rank_text) if rank_text else None
         except ValueError as error:
             raise SystemExit(f"Invalid rank_corpus for {row['card_id']}: {row['rank_corpus']}") from error
         card = {key: row[key].strip() for key in OUTPUT_COLUMNS}

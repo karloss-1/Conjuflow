@@ -18,8 +18,7 @@ const TENSES = [
   ["condicional", "Condicional"],
   ["presente_subjuntivo", "Presente de subjuntivo"],
   ["imperfecto_subjuntivo", "Imperfecto de subjuntivo"],
-  ["imperativo_afirmativo", "Imperativo afirmativo"],
-  ["imperativo_negativo", "Imperativo negativo"]
+  ["imperativo", "Imperativo"]
 ];
 const REGULARITY_LABELS = { all: "Todos", regular: "Regulares", irregular: "Irregulares" };
 const ENDING_LABELS = { all: "Todas", ar: "-AR", er: "-ER", ir: "-IR" };
@@ -194,12 +193,13 @@ function updateMatchPreview() {
 
 function sessionSort(a, b) {
   const order = { due: 0, new: 1 };
+  const corpusRank = card => Number.isFinite(card.rank_corpus) ? card.rank_corpus : Number.MAX_SAFE_INTEGER;
   const aType = cardAvailability(a.card_id);
   const bType = cardAvailability(b.card_id);
   if (aType !== bType) return order[aType] - order[bType];
   const aDue = new Date(progressRecord(a.card_id)?.fsrs?.due || 0).getTime();
   const bDue = new Date(progressRecord(b.card_id)?.fsrs?.due || 0).getTime();
-  return aDue - bDue || a.rank_corpus - b.rank_corpus;
+  return aDue - bDue || corpusRank(a) - corpusRank(b);
 }
 
 function startPractice() {

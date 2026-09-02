@@ -4,7 +4,7 @@ Static, local-first conjugation practice app based on the original Mexican Spani
 
 ## Files
 
-- `Conjugaciones_Piloto_61_verbos_549_tarjetas_patterns_contextuales.csv`: editable source of truth.
+- `Conjugaciones_Final_170_verbos_1360_tarjetas.csv`: editable source of truth.
 - `data/conjugations.js`: generated browser data; do not edit it by hand.
 - `scripts/csv_to_js.py`: CSV → JavaScript converter and validation.
 - `app.js`: IndexedDB, FSRS adapter, sessions, rendering, and controls.
@@ -16,7 +16,7 @@ Static, local-first conjugation practice app based on the original Mexican Spani
 From the project directory:
 
 ```bash
-python3 scripts/csv_to_js.py Conjugaciones_Piloto_61_verbos_549_tarjetas_patterns_contextuales.csv data/conjugations.js
+python3 scripts/csv_to_js.py Conjugaciones_Final_170_verbos_1360_tarjetas.csv data/conjugations.js
 node tests/check_dataset.js
 node tests/pattern_context.js
 node tests/fsrs_invariants.js
@@ -38,7 +38,7 @@ Commit both the CSV and regenerated `data/conjugations.js` to GitHub. GitHub Pag
 
 ## Storage migration
 
-The app keeps the existing database name and version 2 schema. Progress remains in `cardProgress`, keyed by `cardId`; all 540 previous IDs are preserved and only the nine `leer` cards are new. Filter choices are stored separately in `localStorage` and never affect FSRS identity.
+The app keeps the existing database name and version 2 schema. Progress remains in `cardProgress`, keyed by the exact `cardId` supplied by the dataset. The final dataset contains 170 verbs and eight cards per verb; affirmative and negative commands share one `imperativo` card. Filter choices are stored separately in `localStorage` and never affect FSRS identity.
 
 ## Navigation behavior
 

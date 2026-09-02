@@ -10,7 +10,7 @@ import tempfile
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[1]
-SOURCE = ROOT / "Conjugaciones_Piloto_61_verbos_549_tarjetas_patterns_contextuales.csv"
+SOURCE = ROOT / "Conjugaciones_Final_170_verbos_1360_tarjetas.csv"
 SCRIPT = ROOT / "scripts" / "csv_to_js.py"
 
 spec = importlib.util.spec_from_file_location("csv_to_js", SCRIPT)
@@ -30,10 +30,13 @@ with tempfile.TemporaryDirectory() as directory:
     text = destination.read_text(encoding="utf-8")
     payload = json.loads(text.removeprefix("window.CONJUGATION_CONTENT = ").removesuffix(";\n"))
 
-assert len(payload["cards"]) == 549
+assert len(payload["cards"]) == 1360
+assert [card["card_id"] for card in payload["cards"]] == [row["card_id"] for row in rows]
 assert all(isinstance(card["patterns"], list) for card in payload["cards"])
+assert sum(card["rank_corpus"] is None for card in payload["cards"]) == 24
 assert any(not row["patrones_tarjeta"] and card["patterns"] == [] for row, card in zip(rows, payload["cards"]))
 assert all("patrones_tarjeta" not in card and "patrones" not in card for card in payload["cards"])
 assert next(card for card in payload["cards"] if card["card_id"] == "tener__presente_indicativo")["patterns"] == ["e→ie", "yo→-go"]
+assert next(card for card in payload["cards"] if card["card_id"] == "tener__imperativo")["tu"] == "ten / no tengas"
 
 print("CSV importer checks passed.")

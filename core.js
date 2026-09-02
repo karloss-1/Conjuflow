@@ -6,7 +6,7 @@
 }(typeof globalThis !== "undefined" ? globalThis : this, function () {
   "use strict";
 
-  const IMPERATIVE_IDS = new Set(["imperativo_afirmativo", "imperativo_negativo"]);
+  const IMPERATIVE_IDS = new Set(["imperativo"]);
   const PATTERN_LABELS = {
     "e→ie": "e → ie",
     "o→ue": "o → ue",
@@ -21,6 +21,7 @@
     "e→ie/e→i (-ir)": "e → ie / e → i (-ir)",
     "o→ue/o→u (-ir)": "o → ue / o → u (-ir)",
     "cambio ortográfico": "Cambio ortográfico",
+    "-uir→y": "-uir → y",
     "i→y": "i → y",
     "raíz en j": "Raíz en j",
     "raíz irregular": "Raíz irregular",
@@ -38,9 +39,11 @@
       if (!raw.card_id || seen.has(raw.card_id)) throw new Error(`Invalid or duplicate card_id: ${raw.card_id || "(empty)"}`);
       if (!Array.isArray(raw.patterns)) throw new Error(`Invalid patterns array for ${raw.card_id}`);
       seen.add(raw.card_id);
+      const rank = raw.rank_corpus === null || raw.rank_corpus === "" ? null : Number(raw.rank_corpus);
+      if (rank !== null && !Number.isFinite(rank)) throw new Error(`Invalid rank_corpus for ${raw.card_id}`);
       return {
         ...raw,
-        rank_corpus: Number(raw.rank_corpus),
+        rank_corpus: rank,
         patterns: raw.patterns.map(value => String(value).trim()).filter(Boolean),
         applicable: raw.aplicable === true || raw.aplicable === "sí"
       };

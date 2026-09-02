@@ -85,6 +85,14 @@ async function readProgress(page) {
       await page.locator("#regularitySelect option").evaluateAll(options => options.map(option => [option.value, option.textContent])),
       [["all", "Todos"], ["regular", "Regulares"], ["irregular", "Irregulares"]]
     );
+    assert.deepEqual(
+      await page.locator("#tenseSelect option").evaluateAll(options => options.map(option => [option.value, option.textContent])),
+      [
+        ["presente_indicativo", "Presente"], ["preterito", "Pretérito"], ["imperfecto", "Imperfecto"],
+        ["futuro", "Futuro"], ["condicional", "Condicional"], ["presente_subjuntivo", "Presente de subjuntivo"],
+        ["imperfecto_subjuntivo", "Imperfecto de subjuntivo"], ["imperativo", "Imperativo"]
+      ]
+    );
     assert.equal(await page.locator("#rankSelect").count(), 0);
 
     await page.evaluate(() => localStorage.setItem("conjuflow-filters-v1", JSON.stringify({
@@ -101,8 +109,7 @@ async function readProgress(page) {
       ["Pretérito + cambio ortográfico", { tense: "preterito", regularity: "all", pattern: "cambio ortográfico" }],
       ["Futuro + Irregulares", { tense: "futuro", regularity: "irregular", pattern: "all" }],
       ["Presente + yo→-zco", { tense: "presente_indicativo", regularity: "all", pattern: "yo→-zco" }],
-      ["Imperativo afirmativo + Pronominales", { tense: "imperativo_afirmativo", pattern: "all", pronominal: "sí" }],
-      ["Imperativo negativo + Pronominales", { tense: "imperativo_negativo", pronominal: "sí" }],
+      ["Imperativo + Pronominales", { tense: "imperativo", pattern: "all", pronominal: "sí" }],
       ["Solo -IR", { tense: "presente_indicativo", ending: "ir", pattern: "all", pronominal: "all" }]
     ];
     for (const [name, filters] of populatedCases) {
@@ -142,11 +149,12 @@ async function readProgress(page) {
     await page.click("#startButton");
     assert.equal(await page.locator("#emptyTitle").innerText(), "No verbs match these filters.");
 
-    await setFilters(page, { tense: "imperativo_negativo", regularity: "all", ending: "all", pattern: "all", pronominal: "sí" });
+    await setFilters(page, { tense: "imperativo", regularity: "all", ending: "all", pattern: "all", pronominal: "sí" });
     await page.click("#startButton");
     await page.click("#card");
     const pronouns = await page.locator(".pronoun").allInnerTexts();
     assert.deepEqual(pronouns, ["tú", "usted", "nosotros", "ustedes"]);
+    assert.ok((await page.locator(".conjugation").allInnerTexts()).every(form => form.includes(" / ")));
 
     await setFilters(page, { tense: "presente_indicativo", regularity: "irregular", ending: "all", pattern: "e→ie", pronominal: "all" });
     await page.click("#startButton");
@@ -173,10 +181,10 @@ async function readProgress(page) {
     stored = await readProgress(page);
     assert.equal(JSON.stringify(stored.find(record => record.cardId === "tener__presente_indicativo").fsrs), presentSnapshot);
 
-    await setFilters(page, { tense: "condicional", regularity: "all", ending: "all", pattern: "raíz irregular", pronominal: "sí" });
+    await setFilters(page, { tense: "condicional", regularity: "all", ending: "ir", pattern: "raíz irregular", pronominal: "sí" });
     assert.equal(await countMatches(page), 1);
     await page.click("#startButton");
-    assert.equal(await page.locator(".front-verb").innerText(), "ponerse");
+    assert.equal(await page.locator(".front-verb").innerText(), "salirse");
     await page.click("#card");
     await page.click(".grade.good");
     await page.waitForSelector("#emptyTitle");
