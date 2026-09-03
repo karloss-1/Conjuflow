@@ -4,7 +4,7 @@ Static, local-first conjugation practice app based on the original Mexican Spani
 
 ## Files
 
-- `Conjugaciones_Final_170_verbos_1360_tarjetas.csv`: editable source of truth.
+- `Conjugaciones_Final_170_verbos_1360_tarjetas_patron_exclusivo.csv`: editable source of truth.
 - `data/conjugations.js`: generated browser data; do not edit it by hand.
 - `scripts/csv_to_js.py`: CSV → JavaScript converter and validation.
 - `app.js`: IndexedDB, FSRS adapter, sessions, rendering, and controls.
@@ -16,7 +16,7 @@ Static, local-first conjugation practice app based on the original Mexican Spani
 From the project directory:
 
 ```bash
-python3 scripts/csv_to_js.py Conjugaciones_Final_170_verbos_1360_tarjetas.csv data/conjugations.js
+python3 scripts/csv_to_js.py Conjugaciones_Final_170_verbos_1360_tarjetas_patron_exclusivo.csv data/conjugations.js
 node tests/check_dataset.js
 node tests/pattern_context.js
 node tests/fsrs_invariants.js
@@ -34,7 +34,7 @@ Commit both the CSV and regenerated `data/conjugations.js` to GitHub. GitHub Pag
 
 ## Contextual Pattern filter
 
-`Pattern` is calculated dynamically from the cards that survive the active Tense, Regularity, Ending, and Pronominal type filters. Pattern does not filter its own options. If no surviving card has a pattern, the selector is disabled; if a saved or selected pattern stops being compatible, it safely returns to `all`.
+Every card has exactly one pedagogical Pattern, taken directly from `patrones_tarjeta` in the master CSV. `Pattern` is calculated dynamically from the cards that survive the active Tense, Regularity, Ending, and Pronominal type filters, and selecting one uses exact equality. Pattern does not filter its own options; if a saved or selected pattern stops being compatible, it safely returns to `all`.
 
 ## Storage migration
 

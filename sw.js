@@ -1,6 +1,6 @@
 "use strict";
 
-const CACHE_NAME = "conjuflow-v4";
+const CACHE_NAME = "conjuflow-v5";
 const APP_FILES = [
   "./", "./index.html", "./styles.css", "./core.js", "./app.js",
   "./manifest.webmanifest", "./data/conjugations.js",

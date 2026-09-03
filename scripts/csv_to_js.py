@@ -39,9 +39,12 @@ def convert(source: Path, destination: Path) -> None:
             rank = int(rank_text) if rank_text else None
         except ValueError as error:
             raise SystemExit(f"Invalid rank_corpus for {row['card_id']}: {row['rank_corpus']}") from error
+        pattern = row["patrones_tarjeta"].strip()
+        if not pattern or ";" in pattern:
+            raise SystemExit(f"Every card must have exactly one patrones_tarjeta value: {row['card_id']}")
         card = {key: row[key].strip() for key in OUTPUT_COLUMNS}
         card["rank_corpus"] = rank
-        card["patterns"] = [value.strip() for value in row["patrones_tarjeta"].split(";") if value.strip()]
+        card["pattern"] = pattern
         cards.append(card)
 
     payload = {"version": 1, "source": source.name, "cards": cards}

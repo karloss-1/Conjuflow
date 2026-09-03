@@ -27,9 +27,9 @@ body {
 
 main { width: 100%; max-width: 780px; margin: 0 auto; }
 .app-header { text-align: center; }
-h1 { margin: 0 0 6px; font-size: clamp(2rem, 5vw, 2.7rem); letter-spacing: -.03em; }
+h1 { margin: 0 0 6px; color: #fff; font-size: clamp(2.05rem, 5vw, 2.8rem); font-weight: 850; letter-spacing: -.03em; }
 h2 { margin: 0; font-size: 1.05rem; }
-.subtitle { margin: 0 0 22px; color: #17202b; font-weight: 600; }
+.subtitle { margin: 0 0 22px; color: #f3f4f6; font-weight: 650; }
 
 .toolbar,
 .study-shell {

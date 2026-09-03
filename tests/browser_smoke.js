@@ -130,7 +130,11 @@ async function readProgress(page) {
     assert.equal(patternValues.includes("e→i"), false);
 
     await setFilters(page, { regularity: "regular" });
-    assert.equal(await page.locator("#patternSelect").isDisabled(), true);
+    assert.equal(await page.locator("#patternSelect").isDisabled(), false);
+    assert.deepEqual(
+      await page.locator("#patternSelect option").evaluateAll(options => options.map(option => option.value)),
+      ["all", "regular"]
+    );
 
     await setFilters(page, { tense: "preterito", regularity: "all", ending: "all", pattern: "i→y", pronominal: "all" });
     await page.reload({ waitUntil: "networkidle" });
@@ -156,7 +160,7 @@ async function readProgress(page) {
     assert.deepEqual(pronouns, ["tú", "usted", "nosotros", "ustedes"]);
     assert.ok((await page.locator(".conjugation").allInnerTexts()).every(form => form.includes(" / ")));
 
-    await setFilters(page, { tense: "presente_indicativo", regularity: "irregular", ending: "all", pattern: "e→ie", pronominal: "all" });
+    await setFilters(page, { tense: "presente_indicativo", regularity: "irregular", ending: "all", pattern: "muy irregular", pronominal: "all" });
     await page.click("#startButton");
     await findVerb(page, "tener");
     await page.click("#card");

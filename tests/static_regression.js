@@ -21,6 +21,10 @@ assert.equal(app.includes("saved.rank"), false);
 assert.equal(app.includes("filters.rank"), false);
 assert.equal(core.includes("filters.rank"), false);
 assert.equal(core.includes("rank_corpus"), true);
+assert.equal(core.includes("raw.patterns"), false);
+assert.equal(core.includes("card.patterns"), false);
+assert.equal(core.includes("flatMap(card => card.patterns)"), false);
+assert.match(core, /card\.pattern === filters\.pattern/);
 
 assert.match(app, /const DB_NAME = "mexican-spanish-flashcards-db";/);
 assert.match(app, /const DB_VERSION = 2;/);
@@ -41,6 +45,8 @@ assert.equal(app.includes("imperativo_afirmativo"), false);
 assert.equal(app.includes("imperativo_negativo"), false);
 assert.equal(core.includes("imperativo_afirmativo"), false);
 assert.equal(core.includes("imperativo_negativo"), false);
-assert.match(serviceWorker, /const CACHE_NAME = "conjuflow-v4";/);
+assert.match(serviceWorker, /const CACHE_NAME = "conjuflow-v5";/);
+assert.match(read("styles.css"), /h1 \{[^}]*color: #fff;/);
+assert.match(read("styles.css"), /\.subtitle \{[^}]*color: #f3f4f6;/);
 
 console.log("Static app and PWA regression checks passed.");

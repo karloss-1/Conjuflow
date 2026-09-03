@@ -8,6 +8,7 @@
 
   const IMPERATIVE_IDS = new Set(["imperativo"]);
   const PATTERN_LABELS = {
+    "regular": "Regular",
     "e→ie": "e → ie",
     "o→ue": "o → ue",
     "e→i": "e → i",
@@ -15,17 +16,20 @@
     "o→u": "o → u",
     "yo→-go": "yo → -go",
     "yo→-zco": "yo → -zco",
-    "yo irregular": "Yo irregular",
+    "yo irregular": "Irregular yo",
     "e→i (3.ª persona)": "e → i (3rd person)",
     "o→u (3.ª persona)": "o → u (3rd person)",
     "e→ie/e→i (-ir)": "e → ie / e → i (-ir)",
     "o→ue/o→u (-ir)": "o → ue / o → u (-ir)",
-    "cambio ortográfico": "Cambio ortográfico",
+    "cambio ortográfico": "Spelling change",
     "-uir→y": "-uir → y",
     "i→y": "i → y",
-    "raíz en j": "Raíz en j",
-    "raíz irregular": "Raíz irregular",
-    "muy irregular": "Muy irregular"
+    "raíz en j": "J-stem",
+    "raíz irregular": "Irregular stem",
+    "-cer→-zc-": "-cer → -zc-",
+    "-ucir→-uzc-": "-ucir → -uzc-",
+    "muy irregular": "Highly irregular",
+    "no aplicable": "Not applicable"
   };
 
   function patternLabel(value) {
@@ -37,14 +41,16 @@
     const seen = new Set();
     const cards = content.cards.map(raw => {
       if (!raw.card_id || seen.has(raw.card_id)) throw new Error(`Invalid or duplicate card_id: ${raw.card_id || "(empty)"}`);
-      if (!Array.isArray(raw.patterns)) throw new Error(`Invalid patterns array for ${raw.card_id}`);
+      if (typeof raw.pattern !== "string" || !raw.pattern.trim() || raw.pattern.includes(";")) {
+        throw new Error(`Invalid exclusive pattern for ${raw.card_id}`);
+      }
       seen.add(raw.card_id);
       const rank = raw.rank_corpus === null || raw.rank_corpus === "" ? null : Number(raw.rank_corpus);
       if (rank !== null && !Number.isFinite(rank)) throw new Error(`Invalid rank_corpus for ${raw.card_id}`);
       return {
         ...raw,
         rank_corpus: rank,
-        patterns: raw.patterns.map(value => String(value).trim()).filter(Boolean),
+        pattern: raw.pattern.trim(),
         applicable: raw.aplicable === true || raw.aplicable === "sí"
       };
     });
@@ -64,12 +70,12 @@
   function filterCards(cards, filters) {
     return cards.filter(card =>
       matchesBaseFilters(card, filters) &&
-      (filters.pattern === "all" || card.patterns.includes(filters.pattern))
+      (filters.pattern === "all" || card.pattern === filters.pattern)
     );
   }
 
   function availablePatterns(cards, filters) {
-    return [...new Set(cards.filter(card => matchesBaseFilters(card, filters)).flatMap(card => card.patterns).filter(Boolean))]
+    return [...new Set(cards.filter(card => matchesBaseFilters(card, filters)).map(card => card.pattern))]
       .sort((a, b) => patternLabel(a).localeCompare(patternLabel(b), "es"));
   }
 

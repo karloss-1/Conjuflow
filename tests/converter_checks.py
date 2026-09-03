@@ -10,7 +10,7 @@ import tempfile
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[1]
-SOURCE = ROOT / "Conjugaciones_Final_170_verbos_1360_tarjetas.csv"
+SOURCE = ROOT / "Conjugaciones_Final_170_verbos_1360_tarjetas_patron_exclusivo.csv"
 SCRIPT = ROOT / "scripts" / "csv_to_js.py"
 
 spec = importlib.util.spec_from_file_location("csv_to_js", SCRIPT)
@@ -30,13 +30,27 @@ with tempfile.TemporaryDirectory() as directory:
     text = destination.read_text(encoding="utf-8")
     payload = json.loads(text.removeprefix("window.CONJUGATION_CONTENT = ").removesuffix(";\n"))
 
+    invalid_source = Path(directory) / "invalid.csv"
+    invalid_rows = [dict(row) for row in rows]
+    invalid_rows[0]["patrones_tarjeta"] = "e→ie;yo→-go"
+    with invalid_source.open("w", encoding="utf-8", newline="") as handle:
+        writer = csv.DictWriter(handle, fieldnames=invalid_rows[0].keys())
+        writer.writeheader()
+        writer.writerows(invalid_rows)
+    try:
+        module.convert(invalid_source, Path(directory) / "invalid.js")
+    except SystemExit as error:
+        assert "exactly one patrones_tarjeta" in str(error)
+    else:
+        raise AssertionError("The converter must reject multi-pattern rows")
+
 assert len(payload["cards"]) == 1360
 assert [card["card_id"] for card in payload["cards"]] == [row["card_id"] for row in rows]
-assert all(isinstance(card["patterns"], list) for card in payload["cards"])
+assert all(isinstance(card["pattern"], str) and card["pattern"] and ";" not in card["pattern"] for card in payload["cards"])
 assert sum(card["rank_corpus"] is None for card in payload["cards"]) == 24
-assert any(not row["patrones_tarjeta"] and card["patterns"] == [] for row, card in zip(rows, payload["cards"]))
-assert all("patrones_tarjeta" not in card and "patrones" not in card for card in payload["cards"])
-assert next(card for card in payload["cards"] if card["card_id"] == "tener__presente_indicativo")["patterns"] == ["e→ie", "yo→-go"]
+assert all(card["pattern"] == row["patrones_tarjeta"].strip() for row, card in zip(rows, payload["cards"]))
+assert all("patrones_tarjeta" not in card and "patterns" not in card for card in payload["cards"])
+assert next(card for card in payload["cards"] if card["card_id"] == "tener__presente_indicativo")["pattern"] == "muy irregular"
 assert next(card for card in payload["cards"] if card["card_id"] == "tener__imperativo")["tu"] == "ten / no tengas"
 
 print("CSV importer checks passed.")
