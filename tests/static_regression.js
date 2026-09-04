@@ -36,6 +36,7 @@ assert.match(app, /const TS_FSRS_VERSION = "ts-fsrs@5\.4\.1";/);
 assert.match(app, /elements\.previous\.addEventListener/);
 assert.match(app, /elements\.next\.addEventListener/);
 assert.match(app, /saveCardProgress\(card\.card_id, result\.card\)/);
+assert.match(app, /setFiltersCollapsed\(true\);/);
 
 for (const label of ["Again", "Hard", "Good", "Easy", "Previous", "Next", "Start practice"]) {
   assert.ok(html.includes(label), `${label} control must remain in the UI`);
@@ -49,10 +50,13 @@ assert.equal(app.includes("imperativo_afirmativo"), false);
 assert.equal(app.includes("imperativo_negativo"), false);
 assert.equal(core.includes("imperativo_afirmativo"), false);
 assert.equal(core.includes("imperativo_negativo"), false);
-assert.match(serviceWorker, /const CACHE_NAME = "conjuflow-v6";/);
+assert.match(serviceWorker, /const CACHE_NAME = "conjuflow-v7";/);
 assert.match(serviceWorker, /key\.startsWith\("conjuflow-"\) && key !== CACHE_NAME/);
 assert.ok(html.includes('<img class="brand-mark" src="icons/icon.svg"'));
 assert.ok(html.includes("Mexican Spanish verb practice"));
+assert.ok(html.includes("[hidden] { display: none !important; }"));
+assert.equal(html.includes("Choose your filters"), false);
+assert.equal(html.includes("Then start a practice session."), false);
 assert.match(styles, /--primary: #164e63;/);
 assert.match(styles, /--teal: #0f766e;/);
 assert.ok(styles.includes(".toolbar.is-collapsed h2 { display: none; }"));
