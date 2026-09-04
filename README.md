@@ -36,9 +36,9 @@ Commit both the CSV and regenerated `data/conjugations.js` to GitHub. GitHub Pag
 
 Every card has exactly one pedagogical Pattern, taken directly from `patrones_tarjeta` in the master CSV. `Pattern` is calculated dynamically from the cards that survive the active Tense, Regularity, Ending, and Pronominal type filters, and selecting one uses exact equality. Pattern does not filter its own options; if a saved or selected pattern stops being compatible, it safely returns to `all`.
 
-## Storage migration
+## Storage isolation
 
-The app keeps the existing database name and version 2 schema. Progress remains in `cardProgress`, keyed by the exact `cardId` supplied by the dataset. The final dataset contains 170 verbs and eight cards per verb; affirmative and negative commands share one `imperativo` card. Filter choices are stored separately in `localStorage` and never affect FSRS identity.
+ConjuFlow stores progress in its own `conjuflow-db` IndexedDB database with a version 1 schema, independently from the Mexican Spanish Flashcards app. Progress remains in `cardProgress`, keyed by the exact `cardId` supplied by the dataset. The final dataset contains 170 verbs and eight cards per verb; affirmative and negative commands share one `imperativo` card. Filter choices are stored separately in `localStorage` and never affect FSRS identity.
 
 ## Navigation behavior
 

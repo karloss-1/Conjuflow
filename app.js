@@ -2,8 +2,8 @@
 
 /* ---------- Configuration and data ---------- */
 
-const DB_NAME = "mexican-spanish-flashcards-db";
-const DB_VERSION = 2;
+const DB_NAME = "conjuflow-db";
+const DB_VERSION = 1;
 const PROGRESS_STORE = "cardProgress";
 const FILTERS_KEY = "conjuflow-filters-v1";
 const TS_FSRS_VERSION = "ts-fsrs@5.4.1";
@@ -61,13 +61,9 @@ function requestAsPromise(request) {
 function openDatabase() {
   return new Promise((resolve, reject) => {
     const request = indexedDB.open(DB_NAME, DB_VERSION);
-    request.onupgradeneeded = event => {
+    request.onupgradeneeded = () => {
       const database = request.result;
-      if (event.oldVersion < 2) {
-        if (database.objectStoreNames.contains("deckProgress")) database.deleteObjectStore("deckProgress");
-        if (database.objectStoreNames.contains(PROGRESS_STORE)) database.deleteObjectStore(PROGRESS_STORE);
-        database.createObjectStore(PROGRESS_STORE, { keyPath: "cardId" });
-      }
+      if (!database.objectStoreNames.contains(PROGRESS_STORE)) database.createObjectStore(PROGRESS_STORE, { keyPath: "cardId" });
     };
     request.onsuccess = () => resolve(request.result);
     request.onerror = () => reject(request.error);

@@ -49,7 +49,7 @@ async function findVerb(page, verb) {
 
 async function readProgress(page) {
   return page.evaluate(() => new Promise((resolve, reject) => {
-    const request = indexedDB.open("mexican-spanish-flashcards-db", 2);
+    const request = indexedDB.open("conjuflow-db", 1);
     request.onerror = () => reject(request.error);
     request.onsuccess = () => {
       const database = request.result;

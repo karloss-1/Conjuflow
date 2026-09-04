@@ -26,8 +26,11 @@ assert.equal(core.includes("card.patterns"), false);
 assert.equal(core.includes("flatMap(card => card.patterns)"), false);
 assert.match(core, /card\.pattern === filters\.pattern/);
 
-assert.match(app, /const DB_NAME = "mexican-spanish-flashcards-db";/);
-assert.match(app, /const DB_VERSION = 2;/);
+assert.match(app, /const DB_NAME = "conjuflow-db";/);
+assert.match(app, /const DB_VERSION = 1;/);
+assert.match(app, /const PROGRESS_STORE = "cardProgress";/);
+assert.equal(app.includes("mexican-spanish-flashcards-db"), false);
+assert.equal(app.includes("deckProgress"), false);
 assert.match(app, /const TS_FSRS_VERSION = "ts-fsrs@5\.4\.1";/);
 assert.match(app, /elements\.previous\.addEventListener/);
 assert.match(app, /elements\.next\.addEventListener/);
