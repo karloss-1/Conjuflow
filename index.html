@@ -11,6 +11,7 @@
   <link rel="manifest" href="manifest.webmanifest">
   <link rel="apple-touch-icon" href="icons/icon-192.png">
   <link rel="stylesheet" href="styles.css">
+  <style>[hidden] { display: none !important; }</style>
 </head>
 <body>
   <main>
@@ -88,9 +89,9 @@
       <p id="activeFilters" class="active-filters"></p>
       <p id="progress" class="progress" aria-live="polite"></p>
 
-      <div id="emptyState" class="empty">
-        <strong id="emptyTitle">Choose your filters</strong>
-        <span id="emptyMessage">Then start a practice session.</span>
+      <div id="emptyState" class="empty" hidden>
+        <strong id="emptyTitle"></strong>
+        <span id="emptyMessage"></span>
       </div>
 
       <div id="card" class="card" role="button" tabindex="0" aria-label="Card, tap to reveal" hidden>
