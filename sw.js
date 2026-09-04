@@ -1,10 +1,10 @@
 "use strict";
 
-const CACHE_NAME = "conjuflow-v5";
+const CACHE_NAME = "conjuflow-v6";
 const APP_FILES = [
   "./", "./index.html", "./styles.css", "./core.js", "./app.js",
   "./manifest.webmanifest", "./data/conjugations.js",
-  "./vendor/ts-fsrs-5.4.1.umd.js", "./icons/icon-192.png", "./icons/icon-512.png"
+  "./vendor/ts-fsrs-5.4.1.umd.js", "./icons/icon.svg", "./icons/icon-192.png", "./icons/icon-512.png"
 ];
 
 self.addEventListener("install", event => {
