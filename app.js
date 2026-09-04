@@ -208,7 +208,7 @@ function startPractice() {
   showingAnswer = false;
   elements.status.textContent = "";
   elements.toggleFiltersButton.hidden = false;
-  if (window.matchMedia("(max-width: 560px)").matches) setFiltersCollapsed(true);
+  setFiltersCollapsed(true);
   render();
   scheduleNextDueCheck();
 }
@@ -346,7 +346,10 @@ function render() {
   if (!session) {
     elements.activeFilters.textContent = "";
     elements.progress.textContent = "";
-    renderEmpty("Choose your filters", "Then start a practice session.");
+    elements.emptyState.hidden = true;
+    elements.card.hidden = true;
+    elements.revealNote.hidden = true;
+    setButtons(false);
     return;
   }
 
