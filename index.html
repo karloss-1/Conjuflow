@@ -15,6 +15,7 @@
 </head>
 <body>
   <main>
+    <button id="helpButton" class="help-button" type="button" aria-label="How to practice" aria-haspopup="dialog" aria-controls="helpDialog" title="How to practice"><span aria-hidden="true">?</span></button>
     <header class="app-header">
       <img class="brand-mark" src="icons/icon.svg" alt="" width="52" height="52">
       <div class="brand-copy">
@@ -87,7 +88,10 @@
 
     <section class="study-shell" aria-label="Study session">
       <p id="activeFilters" class="active-filters"></p>
-      <p id="progress" class="progress" aria-live="polite"></p>
+      <div id="sessionProgress" class="session-progress" hidden>
+        <p id="progress" class="progress" aria-live="polite"></p>
+        <progress id="progressBar" max="1" value="0" aria-labelledby="progress"></progress>
+      </div>
 
       <div id="emptyState" class="empty" hidden>
         <strong id="emptyTitle"></strong>
@@ -102,13 +106,13 @@
         </div>
       </div>
 
-      <p id="revealNote" class="reveal-note" hidden>Tap the card to reveal the answer</p>
+      <p id="revealNote" class="reveal-note" hidden>Recall all the forms, then tap to reveal the answer</p>
 
       <div class="buttons" aria-label="Rate your answer">
-        <button class="grade again" data-grade="1" disabled>Again<small>I forgot</small></button>
-        <button class="grade hard" data-grade="2" disabled>Hard<small>Difficult</small></button>
-        <button class="grade good" data-grade="3" disabled>Good<small>Good</small></button>
-        <button class="grade easy" data-grade="4" disabled>Easy<small>Easy</small></button>
+        <button class="grade again" data-grade="1" disabled>Again<small>Missed a form</small></button>
+        <button class="grade hard" data-grade="2" disabled>Hard<small>With difficulty</small></button>
+        <button class="grade good" data-grade="3" disabled>Good<small>Some hesitation</small></button>
+        <button class="grade easy" data-grade="4" disabled>Easy<small>No hesitation</small></button>
       </div>
 
       <div class="nav">
@@ -118,6 +122,39 @@
       <p id="status" class="status" role="status"></p>
     </section>
   </main>
+
+  <dialog id="helpDialog" class="help-dialog" aria-labelledby="helpTitle">
+    <div class="help-heading">
+      <h2 id="helpTitle">How to practice</h2>
+      <button id="closeHelpButton" class="close-help" type="button" aria-label="Close help" autofocus><span aria-hidden="true">×</span></button>
+    </div>
+    <section aria-labelledby="studyHelpTitle">
+      <h3 id="studyHelpTitle">Study a card</h3>
+      <p>Select your filters, then select Start practice. Try to recall all the forms for the verb and tense shown before tapping the card to reveal the answer.</p>
+      <p>Compare your answers, then rate the form you found hardest. Include both affirmative and negative forms for imperative cards.</p>
+    </section>
+    <section aria-labelledby="ratingHelpTitle">
+      <h3 id="ratingHelpTitle">Rate your recall</h3>
+      <dl class="rating-guide">
+        <div><dt>Again</dt><dd>You missed any form, made an error, or needed to look at the answer.</dd></div>
+        <div><dt>Hard</dt><dd>All forms were correct, but you struggled to recall at least one.</dd></div>
+        <div><dt>Good</dt><dd>All forms were correct with some hesitation.</dd></div>
+        <div><dt>Easy</dt><dd>All forms were correct immediately and confidently.</dd></div>
+      </dl>
+      <p>Hard, Good, and Easy all mean you answered correctly before revealing.</p>
+    </section>
+    <section aria-labelledby="controlsHelpTitle">
+      <h3 id="controlsHelpTitle">Move between cards</h3>
+      <p>Previous and Next browse the remaining cards without rating them. Previous does not undo a rating or bring back a card you already rated.</p>
+      <p>Only rating a card advances the progress bar. It tracks the cards reviewed in the current round, not mastery. Cards that become due again start a new review round.</p>
+      <p>To change an active session, select Edit filters, choose your settings, then select Start practice to start a new round.</p>
+    </section>
+    <section aria-labelledby="spacingHelpTitle">
+      <h3 id="spacingHelpTitle">What is spaced repetition?</h3>
+      <p>Spaced repetition brings cards back over time to help you remember them. Your ratings guide the next review: difficult cards generally return sooner, and easier cards later.</p>
+      <p>A rated card may disappear until it is due again. When you are caught up, the app shows the next review time for your selection.</p>
+    </section>
+  </dialog>
 
   <script src="vendor/ts-fsrs-5.4.1.umd.js"></script>
   <script src="data/conjugations.js"></script>

@@ -50,7 +50,7 @@ assert.equal(app.includes("imperativo_afirmativo"), false);
 assert.equal(app.includes("imperativo_negativo"), false);
 assert.equal(core.includes("imperativo_afirmativo"), false);
 assert.equal(core.includes("imperativo_negativo"), false);
-assert.match(serviceWorker, /const CACHE_NAME = "conjuflow-v7";/);
+assert.match(serviceWorker, /const CACHE_NAME = "conjuflow-v8";/);
 assert.match(serviceWorker, /key\.startsWith\("conjuflow-"\) && key !== CACHE_NAME/);
 assert.ok(html.includes('<img class="brand-mark" src="icons/icon.svg"'));
 assert.ok(html.includes("Mexican Spanish verb practice"));

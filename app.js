@@ -39,6 +39,8 @@ let dueTimer = null;
 
 const $ = id => document.getElementById(id);
 const elements = {
+  helpButton: $("helpButton"), helpDialog: $("helpDialog"), closeHelpButton: $("closeHelpButton"),
+  sessionProgress: $("sessionProgress"), progressBar: $("progressBar"),
   toolbar: $("toolbar"), filterBody: $("filterBody"), toggleFiltersButton: $("toggleFiltersButton"),
   collapsedSummary: $("collapsedSummary"), tense: $("tenseSelect"), regularity: $("regularitySelect"),
   ending: $("endingSelect"), pattern: $("patternSelect"), pronominal: $("pronominalSelect"),
@@ -179,8 +181,8 @@ function updateMatchPreview() {
     counts[cardAvailability(card.card_id)] += 1;
     return counts;
   }, { due: 0, new: 0, scheduled: 0 });
-  elements.matchCount.textContent = `${matches.length} tarjetas coinciden con estos filtros`;
-  elements.availabilityCount.textContent = `${availability.due} pendientes · ${availability.new} nuevas`;
+  elements.matchCount.textContent = `${matches.length} cards match these filters`;
+  elements.availabilityCount.textContent = `${availability.due} due · ${availability.new} new`;
   elements.startButton.disabled = false;
   saveFilters();
 }
@@ -203,7 +205,7 @@ function startPractice() {
   const filters = currentFilters();
   const matches = filteredCards(filters);
   const eligible = matches.filter(card => cardAvailability(card.card_id) !== "scheduled").sort(sessionSort);
-  session = { filters: { ...filters }, matchIds: matches.map(card => card.card_id), queue: eligible.map(card => card.card_id) };
+  session = { filters: { ...filters }, matchIds: matches.map(card => card.card_id), queue: eligible.map(card => card.card_id), round: 1, roundTotal: eligible.length, reviewedIds: new Set() };
   currentIndex = 0;
   showingAnswer = false;
   elements.status.textContent = "";
@@ -237,6 +239,7 @@ async function grade(rating) {
   const result = fsrsScheduler.next(schedulerCard(card.card_id), new Date(), ratings[rating]);
   try {
     await saveCardProgress(card.card_id, result.card);
+    session.reviewedIds.add(card.card_id);
     session.queue.splice(currentIndex, 1);
     if (currentIndex >= session.queue.length) currentIndex = 0;
     showingAnswer = false;
@@ -274,6 +277,9 @@ function refreshDueSession() {
   const eligible = session.matchIds.map(id => CARD_BY_ID.get(id)).filter(card => cardAvailability(card.card_id) !== "scheduled").sort(sessionSort);
   if (eligible.length) {
     session.queue = eligible.map(card => card.card_id);
+    if (session.roundTotal > 0) session.round += 1;
+    session.roundTotal = eligible.length;
+    session.reviewedIds = new Set();
     currentIndex = 0;
     showingAnswer = false;
   }
@@ -341,11 +347,29 @@ function renderEmpty(title, message) {
   setButtons(false);
 }
 
+function renderSessionProgress() {
+  const total = session?.roundTotal || 0;
+  elements.sessionProgress.hidden = total === 0;
+  if (!total) {
+    elements.progress.textContent = "";
+    elements.progressBar.value = 0;
+    elements.progressBar.max = 1;
+    return;
+  }
+  const reviewed = session.reviewedIds.size;
+  const card = currentCard();
+  const kind = card ? (cardAvailability(card.card_id) === "new" ? "New" : "Due") : "Round complete";
+  const roundLabel = session.round > 1 ? `Review round ${session.round} · ` : "";
+  elements.progress.textContent = `${roundLabel}${reviewed} of ${total} reviewed · ${kind}`;
+  elements.progressBar.max = total;
+  elements.progressBar.value = reviewed;
+}
+
 function render() {
+  renderSessionProgress();
   elements.status.textContent = "";
   if (!session) {
     elements.activeFilters.textContent = "";
-    elements.progress.textContent = "";
     elements.emptyState.hidden = true;
     elements.card.hidden = true;
     elements.revealNote.hidden = true;
@@ -358,7 +382,6 @@ function render() {
   elements.collapsedSummary.textContent = filterSummary(currentFilters());
 
   if (!session.matchIds.length) {
-    elements.progress.textContent = "";
     renderEmpty("No verbs match these filters.", "Try changing one or more practice settings.");
     return;
   }
@@ -366,15 +389,12 @@ function render() {
   const card = currentCard();
   if (!card) {
     const dueAt = nextDueAt(matchingCards);
-    elements.progress.textContent = "";
     renderEmpty("You're caught up.", dueAt ? `Next review: ${new Date(dueAt).toLocaleString()}` : "There are no pending reviews in this selection.");
     return;
   }
 
   elements.emptyState.hidden = true;
   elements.card.hidden = false;
-  const kind = cardAvailability(card.card_id) === "new" ? "New" : "Due";
-  elements.progress.textContent = `${currentIndex + 1} / ${session.queue.length} · ${kind}`;
   elements.sideLabel.textContent = showingAnswer ? "Answer" : "Prompt";
   elements.front.hidden = showingAnswer;
   elements.back.hidden = !showingAnswer;
@@ -402,6 +422,9 @@ function handleFilterChange(event) {
 }
 
 function attachEvents() {
+  elements.helpButton.addEventListener("click", () => elements.helpDialog.showModal());
+  elements.closeHelpButton.addEventListener("click", () => elements.helpDialog.close());
+  elements.helpDialog.addEventListener("close", () => elements.helpButton.focus());
   for (const select of [elements.tense, elements.regularity, elements.ending, elements.pattern, elements.pronominal]) {
     select.addEventListener("change", handleFilterChange);
   }
@@ -415,7 +438,7 @@ function attachEvents() {
   elements.next.addEventListener("click", () => navigate(1));
   elements.gradeButtons.forEach(button => button.addEventListener("click", () => grade(Number(button.dataset.grade))));
   document.addEventListener("keydown", event => {
-    if (event.target.matches("select, button, summary")) return;
+    if (elements.helpDialog.open || event.target.matches("select, button, summary")) return;
     if (event.code === "Space") { event.preventDefault(); reveal(); }
     if (event.key === "ArrowRight") navigate(1);
     if (event.key === "ArrowLeft") navigate(-1);

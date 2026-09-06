@@ -584,3 +584,89 @@ button:disabled {
   button,
   .toolbar { transition: none; }
 }
+
+/* Practice guidance and round progress */
+main { position: relative; }
+.app-header { max-width: calc(100% - 88px); }
+.help-button {
+  position: absolute;
+  top: 0;
+  right: 0;
+  display: grid;
+  place-items: center;
+  width: 44px;
+  height: 44px;
+  padding: 0;
+  color: var(--primary);
+  background: transparent;
+  border-color: transparent;
+}
+.help-button span {
+  display: grid;
+  place-items: center;
+  width: 25px;
+  height: 25px;
+  border: 2px solid currentColor;
+  border-radius: 50%;
+  font-size: 1rem;
+  line-height: 1;
+}
+.grade small { white-space: nowrap; }
+.session-progress { margin: 4px 0 11px; }
+.session-progress .progress { margin: 0 0 7px; }
+#progressBar {
+  display: block;
+  width: 100%;
+  height: 6px;
+  overflow: hidden;
+  border: 0;
+  border-radius: 999px;
+  appearance: none;
+  background: var(--border);
+  color: var(--teal);
+}
+#progressBar::-webkit-progress-bar { background: var(--border); border-radius: 999px; }
+#progressBar::-webkit-progress-value { background: var(--teal); border-radius: 999px; }
+#progressBar::-moz-progress-bar { background: var(--teal); border-radius: 999px; }
+.help-dialog {
+  width: min(560px, calc(100% - 24px));
+  max-height: 85vh;
+  max-height: 85dvh;
+  padding: 0 22px 20px;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  color: var(--text);
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 18px;
+  box-shadow: var(--shadow-card);
+}
+.help-dialog::backdrop { background: rgba(16, 33, 43, .45); }
+body:has(.help-dialog[open]) { overflow: hidden; }
+.help-heading {
+  position: sticky;
+  top: 0;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 12px 0;
+  background: var(--surface);
+  border-bottom: 1px solid var(--border);
+}
+.close-help {
+  flex: 0 0 44px;
+  width: 44px;
+  padding: 0;
+  font-size: 1.5rem;
+  color: var(--primary);
+  background: var(--surface-soft);
+  border-color: transparent;
+}
+.help-dialog h3 { margin: 20px 0 8px; font-size: .98rem; color: var(--primary); }
+.help-dialog p, .rating-guide { font-size: .92rem; line-height: 1.55; }
+.help-dialog p { margin: 8px 0; }
+.rating-guide { margin: 0; }
+.rating-guide > div { display: grid; grid-template-columns: 48px minmax(0, 1fr); gap: 12px; padding: 7px 0; }
+.rating-guide dt { font-weight: 800; }
+.rating-guide dd { margin: 0; }

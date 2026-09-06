@@ -39,7 +39,7 @@ async function countMatches(page) {
 }
 
 async function findVerb(page, verb) {
-  const total = Number((await page.locator("#progress").innerText()).match(/\/\s*(\d+)/)[1]);
+  const total = Number(await page.locator("#progressBar").getAttribute("max"));
   for (let index = 0; index < total; index += 1) {
     if ((await page.locator(".front-verb").innerText()) === verb) return;
     await page.click("#nextButton");
