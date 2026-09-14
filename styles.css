@@ -587,6 +587,18 @@ button:disabled {
 
 /* Practice guidance and round progress */
 main { position: relative; }
+.attribution {
+  position: absolute;
+  right: 18px;
+  bottom: 4px;
+  left: 18px;
+  margin: 0;
+  color: var(--muted);
+  font-size: .72rem;
+  font-weight: 600;
+  line-height: 1.25;
+  text-align: center;
+}
 .app-header { max-width: calc(100% - 88px); }
 .help-button {
   position: absolute;
