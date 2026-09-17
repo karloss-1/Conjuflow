@@ -94,5 +94,28 @@
     return rows.filter(([, value]) => String(value || "").trim());
   }
 
-  return { normalizeContent, matchesBaseFilters, filterCards, availablePatterns, resolvePatternSelection, patternLabel, isImperative, paradigmRows };
+  function normalizeRoundLimit(value) {
+    return value === "all" ? Infinity : ([10, 20].includes(Number(value)) ? Number(value) : 10);
+  }
+
+  function selectPracticeRound(candidates, limit, introducedNewIds = new Set()) {
+    const corpusRank = candidate => Number.isFinite(candidate.card.rank_corpus) ? candidate.card.rank_corpus : Number.MAX_SAFE_INTEGER;
+    const priority = candidate => {
+      if (candidate.availability === "due" && ["learning", "relearning"].includes(candidate.fsrsState)) return 0;
+      if (candidate.availability === "due") return 1;
+      if (candidate.availability === "new" && !introducedNewIds.has(candidate.card.card_id)) return 2;
+      return 3;
+    };
+    return candidates
+      .filter(candidate => candidate.availability !== "scheduled")
+      .map((candidate, index) => ({ ...candidate, index }))
+      .sort((a, b) => priority(a) - priority(b) ||
+        (a.dueAt || 0) - (b.dueAt || 0) ||
+        corpusRank(a) - corpusRank(b) ||
+        a.card.card_id.localeCompare(b.card.card_id) || a.index - b.index)
+      .slice(0, normalizeRoundLimit(limit))
+      .map(({ index, ...candidate }) => candidate);
+  }
+
+  return { normalizeContent, matchesBaseFilters, filterCards, availablePatterns, resolvePatternSelection, patternLabel, isImperative, paradigmRows, normalizeRoundLimit, selectPracticeRound };
 }));

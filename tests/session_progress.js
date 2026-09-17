@@ -46,8 +46,9 @@ run(`
   assert.match(nodes.get("progress").textContent, /2 of 2 reviewed.*Round complete/);
   run("refreshDueSession(); render()");
   assert.equal(nodes.get("progressBar").value, 2, "completion remains visible while waiting");
-  run("for (const record of progressByCard.values()) record.fsrs.due = new Date(0); refreshDueSession(); render()");
-  assert.match(nodes.get("progress").textContent, /Review round 2 · 0 of 2 reviewed/);
+  run("selected = CONTENT.cards.slice(0, 3); for (const record of progressByCard.values()) record.fsrs.due = new Date(0); refreshDueSession(); render()");
+  assert.match(nodes.get("progress").textContent, /Automatic review · 0 of 2 reviewed/);
+  assert.equal(run("session.queue.length"), 2, "automatic reviews must contain only due cards, never unrelated new cards");
   run("reveal(); saveCardProgress = async () => { throw new Error('simulated save failure'); }");
   sandbox.console = { ...console, error() {} };
   await run("grade(3)");
@@ -56,5 +57,5 @@ run(`
   assert.equal(nodes.get("sessionProgress").hidden, true, "no meaningless zero-card bar");
   run("selected = CONTENT.cards.slice(0, 1); startPractice()");
   assert.match(nodes.get("progress").textContent, /^0 of 1 reviewed/);
-  console.log("Session progress checks passed: navigation, rating, completion, repeat rounds, failed saves, and restart.");
+  console.log("Session progress checks passed: navigation, rating, completion, due-only automatic reviews, failed saves, and restart.");
 })().catch(error => { console.error(error); process.exitCode = 1; });

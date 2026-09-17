@@ -127,3 +127,13 @@ La UI da prioridad a tiempo y regularidad, relega filtros adicionales a More fil
 Leer estas notas junto al [README](README.md), el CSV y las pruebas. El código describe el comportamiento actual; estas notas explican su contexto y límites. Para decisiones nuevas, registrar fecha, necesidad del alumnado, alternativas, motivo, consecuencias y evidencia que permitiría reconsiderarlas. Si falta el razonamiento histórico, mantenerlo como desconocido hasta recuperar una fuente; no inventarlo.
 
 La inspección no encontró AGENTS.md ni instrucciones de una rama documental alternativa. Estas notas se añaden a main; las ramas de respaldo y de UI no se usan como fuente normativa del estado vigente.
+
+## 11. Contexto de práctica y rondas manejables
+
+**Hecho.** Los filtros activos definen un contexto de práctica persistente. El selector “Cards per round” (10, 20 o All; 10 por defecto) se guarda en `localStorage` y limita únicamente las rondas voluntarias. No modifica la identidad `card_id`, el historial FSRS, las fechas de vencimiento ni el esquema de IndexedDB.
+
+Cada ronda voluntaria selecciona solo tarjetas disponibles: primero Learning/Relearning vencidas, después Review vencidas y finalmente New. Dentro de cada prioridad se conserva un orden determinista por vencimiento, rango de corpus e ID. “Practice X more” construye otra ronda dentro del mismo contexto y da preferencia a tarjetas New todavía no introducidas.
+
+Completar una ronda no termina el contexto. Cuando la cola queda vacía, el temporizador consulta el siguiente vencimiento del conjunto filtrado. Al llegar esa hora, la reactivación automática incluye exclusivamente tarjetas FSRS vencidas y nunca añade tarjetas New para completar el tamaño configurado. Las tarjetas programadas para más tarde permanecen inaccesibles hasta su vencimiento.
+
+**Razonamiento.** Separar contexto, ronda y programación permite trabajar con conjuntos amplios sin convertir el tamaño de ronda en cuota diaria ni alterar el espaciado. La continuación voluntaria controla la carga inmediata; la reactivación automática conserva la responsabilidad exclusiva de FSRS sobre los repasos futuros.

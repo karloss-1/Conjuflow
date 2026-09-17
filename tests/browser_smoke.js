@@ -94,6 +94,10 @@ async function readProgress(page) {
       ]
     );
     assert.equal(await page.locator("#rankSelect").count(), 0);
+    assert.equal(await page.locator("#roundSizeSelect").inputValue(), "10");
+    await page.selectOption("#roundSizeSelect", "all");
+    await page.reload({ waitUntil: "networkidle" });
+    assert.equal(await page.locator("#roundSizeSelect").inputValue(), "all");
 
     await page.evaluate(() => localStorage.setItem("conjuflow-filters-v1", JSON.stringify({
       tense: "preterito", regularity: "irregular", ending: "all", pattern: "cambio ortográfico", pronominal: "all", rank: "50"
@@ -192,8 +196,10 @@ async function readProgress(page) {
     await page.click("#card");
     await page.click(".grade.good");
     await page.waitForSelector("#emptyTitle");
-    assert.equal(await page.locator("#emptyTitle").innerText(), "You're caught up.");
-    assert.match(await page.locator("#emptyMessage").innerText(), /^Next review:/);
+    assert.equal(await page.locator("#emptyTitle").innerText(), "Round complete");
+    assert.equal(await page.locator("#emptyMessage").innerText(), "1 card practiced");
+    assert.match(await page.locator("#nextReview").innerText(), /^Next review:/);
+    assert.equal(await page.locator("#practiceMoreButton").isHidden(), true);
 
     assert.deepEqual(errors, []);
     console.log("Browser smoke checks passed, including FSRS identity and caught-up state.");

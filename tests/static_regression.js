@@ -50,7 +50,7 @@ assert.equal(app.includes("imperativo_afirmativo"), false);
 assert.equal(app.includes("imperativo_negativo"), false);
 assert.equal(core.includes("imperativo_afirmativo"), false);
 assert.equal(core.includes("imperativo_negativo"), false);
-assert.match(serviceWorker, /const CACHE_NAME = "conjuflow-v8";/);
+assert.match(serviceWorker, /const CACHE_NAME = "conjuflow-v9";/);
 assert.match(serviceWorker, /key\.startsWith\("conjuflow-"\) && key !== CACHE_NAME/);
 assert.ok(html.includes('<img class="brand-mark" src="icons/icon.svg"'));
 assert.ok(html.includes("Mexican Spanish verb practice"));
@@ -67,5 +67,9 @@ assert.ok(styles.includes("grid-template-columns: repeat(2, 1fr);"));
 assert.ok(styles.includes("overflow: auto;"));
 assert.equal(styles.includes("linear-gradient"), false);
 assert.equal(styles.includes("backdrop-filter"), false);
+assert.ok(html.includes('id="roundSizeSelect"'));
+assert.ok(html.includes('id="practiceMoreButton"'));
+assert.ok(app.includes('const ROUND_SIZE_KEY = "conjuflow-round-size-v1"'));
+assert.ok(app.includes('filter(candidate => candidate.availability === "due")'));
 
 console.log("Static app and PWA regression checks passed.");

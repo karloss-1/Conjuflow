@@ -6,6 +6,7 @@ const DB_NAME = "conjuflow-db";
 const DB_VERSION = 1;
 const PROGRESS_STORE = "cardProgress";
 const FILTERS_KEY = "conjuflow-filters-v1";
+const ROUND_SIZE_KEY = "conjuflow-round-size-v1";
 const TS_FSRS_VERSION = "ts-fsrs@5.4.1";
 const MAX_TIMER_DELAY = 2147483647;
 const CONTENT = ConjuFlowCore.normalizeContent(window.CONJUGATION_CONTENT);
@@ -44,9 +45,11 @@ const elements = {
   toolbar: $("toolbar"), filterBody: $("filterBody"), toggleFiltersButton: $("toggleFiltersButton"),
   collapsedSummary: $("collapsedSummary"), tense: $("tenseSelect"), regularity: $("regularitySelect"),
   ending: $("endingSelect"), pattern: $("patternSelect"), pronominal: $("pronominalSelect"),
-  matchCount: $("matchCount"), availabilityCount: $("availabilityCount"), startButton: $("startButton"),
+  roundSize: $("roundSizeSelect"), matchCount: $("matchCount"), availabilityCount: $("availabilityCount"),
+  roundPreview: $("roundPreview"), startButton: $("startButton"), practiceMoreButton: $("practiceMoreButton"),
   activeFilters: $("activeFilters"), progress: $("progress"), emptyState: $("emptyState"),
-  emptyTitle: $("emptyTitle"), emptyMessage: $("emptyMessage"), card: $("card"), front: $("front"), back: $("back"),
+  emptyTitle: $("emptyTitle"), emptyMessage: $("emptyMessage"), nextReview: $("nextReview"),
+  card: $("card"), front: $("front"), back: $("back"),
   sideLabel: $("sideLabel"), revealNote: $("revealNote"), previous: $("previousButton"), next: $("nextButton"), status: $("status"),
   gradeButtons: [...document.querySelectorAll(".grade")]
 };
@@ -113,6 +116,14 @@ function cardAvailability(cardId, now = Date.now()) {
   return Number.isFinite(due) && due <= now ? "due" : "scheduled";
 }
 
+function fsrsStateName(cardId) {
+  const state = progressRecord(cardId)?.fsrs?.state;
+  if (state === FsrsState.Learning) return "learning";
+  if (state === FsrsState.Relearning) return "relearning";
+  if (state === FsrsState.Review) return "review";
+  return "new";
+}
+
 function nextDueAt(cards, now = Date.now()) {
   return cards.map(card => {
     const record = progressRecord(card.card_id);
@@ -140,6 +151,10 @@ function saveFilters() {
   localStorage.setItem(FILTERS_KEY, JSON.stringify(currentFilters()));
 }
 
+function saveRoundSize() {
+  localStorage.setItem(ROUND_SIZE_KEY, elements.roundSize.value);
+}
+
 function restoreFilters() {
   let saved = {};
   try { saved = JSON.parse(localStorage.getItem(FILTERS_KEY)) || {}; } catch (_) { saved = {}; }
@@ -148,6 +163,8 @@ function restoreFilters() {
     if ([...element.options].some(option => option.value === value)) element.value = value;
   }
   updatePatternOptions(saved.pattern);
+  const savedRoundSize = localStorage.getItem(ROUND_SIZE_KEY);
+  elements.roundSize.value = ["10", "20", "all"].includes(savedRoundSize) ? savedRoundSize : "10";
 }
 
 function updatePatternOptions(preferred = elements.pattern.value) {
@@ -174,6 +191,20 @@ function filterSummary(filters, includeSecondary = true) {
   return labels.join(" · ");
 }
 
+function roundSizeSummary() {
+  return elements.roundSize.value === "all" ? "All available" : `${elements.roundSize.value}-card rounds`;
+}
+
+function candidateFor(card, now = Date.now()) {
+  const availability = cardAvailability(card.card_id, now);
+  const dueAt = progressRecord(card.card_id)?.fsrs?.due ? new Date(progressRecord(card.card_id).fsrs.due).getTime() : 0;
+  return { card, availability, fsrsState: fsrsStateName(card.card_id), dueAt };
+}
+
+function selectVoluntaryRound(cards, introducedNewIds = new Set(), now = Date.now()) {
+  return ConjuFlowCore.selectPracticeRound(cards.map(card => candidateFor(card, now)), elements.roundSize.value, introducedNewIds);
+}
+
 function updateMatchPreview() {
   const filters = currentFilters();
   const matches = filteredCards(filters);
@@ -182,35 +213,58 @@ function updateMatchPreview() {
     return counts;
   }, { due: 0, new: 0, scheduled: 0 });
   elements.matchCount.textContent = `${matches.length} cards match these filters`;
-  elements.availabilityCount.textContent = `${availability.due} due · ${availability.new} new`;
+  const availableNow = availability.due + availability.new;
+  elements.availabilityCount.textContent = availability.scheduled
+    ? `${availableNow} available now · ${availability.scheduled} scheduled for later`
+    : (availability.due && availability.new ? `${availability.due} due · ${availability.new} new` : `${availableNow} available now`);
+  const roundCount = Math.min(availableNow, ConjuFlowCore.normalizeRoundLimit(elements.roundSize.value));
+  elements.roundPreview.textContent = `${roundCount} ${roundCount === 1 ? "card" : "cards"} in this round`;
   elements.startButton.disabled = false;
   saveFilters();
+  saveRoundSize();
 }
 
 /* ---------- Session management ---------- */
 
-function sessionSort(a, b) {
-  const order = { due: 0, new: 1 };
-  const corpusRank = card => Number.isFinite(card.rank_corpus) ? card.rank_corpus : Number.MAX_SAFE_INTEGER;
-  const aType = cardAvailability(a.card_id);
-  const bType = cardAvailability(b.card_id);
-  if (aType !== bType) return order[aType] - order[bType];
-  const aDue = new Date(progressRecord(a.card_id)?.fsrs?.due || 0).getTime();
-  const bDue = new Date(progressRecord(b.card_id)?.fsrs?.due || 0).getTime();
-  return aDue - bDue || corpusRank(a) - corpusRank(b);
+function sameFilters(a, b) {
+  return Boolean(a && b && Object.keys(a).every(key => a[key] === b[key]));
+}
+
+function installRound(candidates, mode, incrementRound = false) {
+  session.queue = candidates.map(candidate => candidate.card.card_id);
+  session.mode = mode;
+  session.roundTotal = candidates.length;
+  session.reviewedIds = new Set();
+  if (incrementRound) session.round += 1;
+  if (mode === "voluntary") {
+    for (const candidate of candidates) {
+      if (candidate.availability === "new") session.introducedNewIds.add(candidate.card.card_id);
+    }
+  }
+  currentIndex = 0;
+  showingAnswer = false;
 }
 
 function startPractice() {
   clearDueTimer();
   const filters = currentFilters();
   const matches = filteredCards(filters);
-  const eligible = matches.filter(card => cardAvailability(card.card_id) !== "scheduled").sort(sessionSort);
-  session = { filters: { ...filters }, matchIds: matches.map(card => card.card_id), queue: eligible.map(card => card.card_id), round: 1, roundTotal: eligible.length, reviewedIds: new Set() };
-  currentIndex = 0;
-  showingAnswer = false;
+  const continuingContext = sameFilters(session?.filters, filters);
+  const introducedNewIds = continuingContext ? session.introducedNewIds : new Set();
+  session = { filters: { ...filters }, matchIds: matches.map(card => card.card_id), queue: [], round: continuingContext ? session.round : 1, roundTotal: 0, reviewedIds: new Set(), introducedNewIds, mode: "voluntary" };
+  installRound(selectVoluntaryRound(matches, introducedNewIds), "voluntary", continuingContext);
   elements.status.textContent = "";
   elements.toggleFiltersButton.hidden = false;
   setFiltersCollapsed(true);
+  render();
+  scheduleNextDueCheck();
+}
+
+function practiceMore() {
+  if (!session || session.queue.length) return;
+  clearDueTimer();
+  const cards = session.matchIds.map(id => CARD_BY_ID.get(id));
+  installRound(selectVoluntaryRound(cards, session.introducedNewIds), "voluntary", true);
   render();
   scheduleNextDueCheck();
 }
@@ -274,15 +328,11 @@ function scheduleNextDueCheck() {
 
 function refreshDueSession() {
   if (!session || session.queue.length) return;
-  const eligible = session.matchIds.map(id => CARD_BY_ID.get(id)).filter(card => cardAvailability(card.card_id) !== "scheduled").sort(sessionSort);
-  if (eligible.length) {
-    session.queue = eligible.map(card => card.card_id);
-    if (session.roundTotal > 0) session.round += 1;
-    session.roundTotal = eligible.length;
-    session.reviewedIds = new Set();
-    currentIndex = 0;
-    showingAnswer = false;
-  }
+  const due = ConjuFlowCore.selectPracticeRound(
+    session.matchIds.map(id => candidateFor(CARD_BY_ID.get(id))).filter(candidate => candidate.availability === "due"),
+    "all"
+  );
+  if (due.length) installRound(due, "automatic", true);
 }
 
 /* ---------- Rendering ---------- */
@@ -338,12 +388,14 @@ function setButtons(answerVisible) {
   elements.next.disabled = !canNavigate;
 }
 
-function renderEmpty(title, message) {
+function renderEmpty(title, message, nextReview = "") {
   elements.emptyState.hidden = false;
   elements.card.hidden = true;
   elements.revealNote.hidden = true;
   elements.emptyTitle.textContent = title;
   elements.emptyMessage.textContent = message;
+  elements.nextReview.textContent = nextReview;
+  elements.practiceMoreButton.hidden = true;
   setButtons(false);
 }
 
@@ -359,7 +411,7 @@ function renderSessionProgress() {
   const reviewed = session.reviewedIds.size;
   const card = currentCard();
   const kind = card ? (cardAvailability(card.card_id) === "new" ? "New" : "Due") : "Round complete";
-  const roundLabel = session.round > 1 ? `Review round ${session.round} · ` : "";
+  const roundLabel = session.mode === "automatic" ? "Automatic review · " : "";
   elements.progress.textContent = `${roundLabel}${reviewed} of ${total} reviewed · ${kind}`;
   elements.progressBar.max = total;
   elements.progressBar.value = reviewed;
@@ -379,7 +431,7 @@ function render() {
 
   const matchingCards = session.matchIds.map(id => CARD_BY_ID.get(id));
   elements.activeFilters.textContent = filterSummary(session.filters);
-  elements.collapsedSummary.textContent = filterSummary(currentFilters());
+  elements.collapsedSummary.textContent = `${filterSummary(currentFilters())} · ${roundSizeSummary()}`;
 
   if (!session.matchIds.length) {
     renderEmpty("No verbs match these filters.", "Try changing one or more practice settings.");
@@ -389,11 +441,22 @@ function render() {
   const card = currentCard();
   if (!card) {
     const dueAt = nextDueAt(matchingCards);
-    renderEmpty("You're caught up.", dueAt ? `Next review: ${new Date(dueAt).toLocaleString()}` : "There are no pending reviews in this selection.");
+    const completed = session.roundTotal > 0 && session.reviewedIds.size === session.roundTotal;
+    const title = completed ? "Round complete" : "No cards available right now";
+    const message = completed ? `${session.roundTotal} ${session.roundTotal === 1 ? "card" : "cards"} practiced` : "All matching cards are scheduled for later.";
+    renderEmpty(title, message, dueAt ? `Next review: ${new Date(dueAt).toLocaleString()}` : "No review is currently scheduled.");
+    if (completed && session.mode === "voluntary") {
+      const additional = selectVoluntaryRound(matchingCards, session.introducedNewIds).length;
+      if (additional) {
+        elements.practiceMoreButton.textContent = `Practice ${additional} more`;
+        elements.practiceMoreButton.hidden = false;
+      }
+    }
     return;
   }
 
   elements.emptyState.hidden = true;
+  elements.practiceMoreButton.hidden = true;
   elements.card.hidden = false;
   elements.sideLabel.textContent = showingAnswer ? "Answer" : "Prompt";
   elements.front.hidden = showingAnswer;
@@ -425,10 +488,11 @@ function attachEvents() {
   elements.helpButton.addEventListener("click", () => elements.helpDialog.showModal());
   elements.closeHelpButton.addEventListener("click", () => elements.helpDialog.close());
   elements.helpDialog.addEventListener("close", () => elements.helpButton.focus());
-  for (const select of [elements.tense, elements.regularity, elements.ending, elements.pattern, elements.pronominal]) {
+  for (const select of [elements.tense, elements.regularity, elements.ending, elements.pattern, elements.pronominal, elements.roundSize]) {
     select.addEventListener("change", handleFilterChange);
   }
   elements.startButton.addEventListener("click", startPractice);
+  elements.practiceMoreButton.addEventListener("click", practiceMore);
   elements.toggleFiltersButton.addEventListener("click", () => setFiltersCollapsed(!elements.toolbar.classList.contains("is-collapsed")));
   elements.card.addEventListener("click", reveal);
   elements.card.addEventListener("keydown", event => {

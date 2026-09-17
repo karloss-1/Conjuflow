@@ -217,6 +217,11 @@ button:disabled {
 
 .more-filters summary::marker { color: var(--teal); }
 
+.round-setting {
+  width: min(220px, 100%);
+  margin-top: 15px;
+}
+
 .start-row {
   display: grid;
   grid-template-columns: 1fr auto;
@@ -490,13 +495,18 @@ button:disabled {
   border-radius: 20px;
   color: var(--muted);
   text-align: center;
+  gap: 6px;
 }
 
 .empty strong {
   display: block;
-  margin-bottom: 6px;
   color: var(--text);
   font-size: 1.15rem;
+}
+
+.empty .start-button {
+  justify-self: center;
+  margin-top: 12px;
 }
 
 .status {
@@ -540,6 +550,8 @@ button:disabled {
   }
 
   .start-button { width: 100%; }
+
+  .empty .start-button { width: min(100%, 260px); }
 
   .toolbar.is-collapsed {
     margin-bottom: 11px;
