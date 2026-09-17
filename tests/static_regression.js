@@ -41,7 +41,7 @@ assert.match(app, /setFiltersCollapsed\(true\);/);
 for (const label of ["Again", "Hard", "Good", "Easy", "Previous", "Next", "Start practice"]) {
   assert.ok(html.includes(label), `${label} control must remain in the UI`);
 }
-for (const asset of ["styles.css", "core.js", "app.js", "manifest.webmanifest", "data/conjugations.js", "vendor/ts-fsrs-5.4.1.umd.js", "icons/icon.svg", "icons/icon-192.png", "icons/icon-512.png"]) {
+for (const asset of ["styles.css", "core.js", "app.js", "install.js", "manifest.webmanifest", "data/conjugations.js", "vendor/ts-fsrs-5.4.1.umd.js", "icons/icon.svg", "icons/icon-192.png", "icons/icon-512.png"]) {
   assert.ok(fs.existsSync(path.join(root, asset)), `${asset} must exist`);
   assert.ok(serviceWorker.includes(`"./${asset}"`), `${asset} must be represented in the offline cache`);
 }
@@ -50,7 +50,7 @@ assert.equal(app.includes("imperativo_afirmativo"), false);
 assert.equal(app.includes("imperativo_negativo"), false);
 assert.equal(core.includes("imperativo_afirmativo"), false);
 assert.equal(core.includes("imperativo_negativo"), false);
-assert.match(serviceWorker, /const CACHE_NAME = "conjuflow-v9";/);
+assert.match(serviceWorker, /const CACHE_NAME = "conjuflow-v10";/);
 assert.match(serviceWorker, /key\.startsWith\("conjuflow-"\) && key !== CACHE_NAME/);
 assert.ok(html.includes('<img class="brand-mark" src="icons/icon.svg"'));
 assert.ok(html.includes("Mexican Spanish verb practice"));
@@ -71,5 +71,11 @@ assert.ok(html.includes('id="roundSizeSelect"'));
 assert.ok(html.includes('id="practiceMoreButton"'));
 assert.ok(app.includes('const ROUND_SIZE_KEY = "conjuflow-round-size-v1"'));
 assert.ok(app.includes('filter(candidate => candidate.availability === "due")'));
+assert.ok(html.includes('id="installButton"'));
+assert.ok(html.includes('id="iosInstallDialog"'));
+assert.ok(html.includes('<script src="install.js"></script>'));
+assert.ok(serviceWorker.includes('"./install.js"'));
+assert.match(app, /const DB_NAME = "conjuflow-db";/);
+assert.match(app, /const DB_VERSION = 1;/);
 
 console.log("Static app and PWA regression checks passed.");

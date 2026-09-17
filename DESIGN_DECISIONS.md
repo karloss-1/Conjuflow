@@ -137,3 +137,9 @@ Cada ronda voluntaria selecciona solo tarjetas disponibles: primero Learning/Rel
 Completar una ronda no termina el contexto. Cuando la cola queda vacía, el temporizador consulta el siguiente vencimiento del conjunto filtrado. Al llegar esa hora, la reactivación automática incluye exclusivamente tarjetas FSRS vencidas y nunca añade tarjetas New para completar el tamaño configurado. Las tarjetas programadas para más tarde permanecen inaccesibles hasta su vencimiento.
 
 **Razonamiento.** Separar contexto, ronda y programación permite trabajar con conjuntos amplios sin convertir el tamaño de ronda en cuota diaria ni alterar el espaciado. La continuación voluntaria controla la carga inmediata; la reactivación automática conserva la responsabilidad exclusiva de FSRS sobre los repasos futuros.
+
+## 12. Instalación PWA como mejora progresiva
+
+**Hecho.** `install.js` es una capa independiente de la práctica. En Android conserva `beforeinstallprompt` y solo muestra el control tras detectar un evento instalable; la solicitud nativa ocurre únicamente después de un toque explícito. En iPhone y iPad identifica también el modo iPadOS con user-agent de escritorio y multitáctil, y abre instrucciones breves para Share → Add to Home Screen. El control se oculta en modo standalone o después de `appinstalled`.
+
+La capa no usa IndexedDB, FSRS ni datos de tarjetas. Si el navegador no ofrece instalación o falla la detección, el botón permanece oculto y la aplicación sigue funcionando normalmente. El manifiesto existente ya contiene `display: standalone`, iconos, `start_url`, `scope` y colores adecuados, por lo que no fue necesario modificarlo.
