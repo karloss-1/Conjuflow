@@ -1,4 +1,4 @@
-# ConjuFlow
+# Conjugón
 
 Static, local-first conjugation practice app based on the original Mexican Spanish Flashcards code. It keeps `ts-fsrs@5.4.1`, IndexedDB persistence, the four FSRS ratings, keyboard navigation, and offline PWA support.
 
@@ -38,7 +38,7 @@ Every card has exactly one pedagogical Pattern, taken directly from `patrones_ta
 
 ## Storage isolation
 
-ConjuFlow stores progress in its own `conjuflow-db` IndexedDB database with a version 1 schema, independently from the Mexican Spanish Flashcards app. Progress remains in `cardProgress`, keyed by the exact `cardId` supplied by the dataset. The final dataset contains 170 verbs and eight cards per verb; affirmative and negative commands share one `imperativo` card. Filter choices are stored separately in `localStorage` and never affect FSRS identity.
+Conjugón stores progress in its own `conjuflow-db` IndexedDB database with a version 1 schema, independently from the Mexican Spanish Flashcards app. Progress remains in `cardProgress`, keyed by the exact `cardId` supplied by the dataset. The final dataset contains 170 verbs and eight cards per verb; affirmative and negative commands share one `imperativo` card. Filter choices are stored separately in `localStorage` and never affect FSRS identity.
 
 ## Navigation behavior
 

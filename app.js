@@ -527,7 +527,7 @@ async function init() {
     if ("serviceWorker" in navigator) navigator.serviceWorker.register("sw.js").catch(error => console.warn("Service worker registration failed", error));
   } catch (error) {
     console.error(error);
-    elements.status.textContent = "ConjuFlow could not start. Please check that its data files and local storage are available.";
+    elements.status.textContent = "Conjugón could not start. Please check that its data files and local storage are available.";
   }
 }
 
