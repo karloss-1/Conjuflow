@@ -1,5 +1,6 @@
 "use strict";
 
+// Refresh cached presentation assets on the next service worker update.
 const CACHE_NAME = "conjuflow-v10";
 const APP_FILES = [
   "./", "./index.html", "./styles.css", "./core.js", "./app.js", "./install.js",
